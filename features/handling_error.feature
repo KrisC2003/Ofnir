@@ -1,7 +1,7 @@
 Feature: Performance and Error Handling
-  As a user
-  I want the app to be responsive and handle errors gracefully
-  So that I can have a smooth experience while using it
+As a user
+I want the app to be responsive and handle errors gracefully
+So that I can have a smooth experience while using it
 
 Scenario: Invalid file format error
 Given the user uploads a file that is not an image
