@@ -11,5 +11,5 @@ Then The app should display the traslated text in English
 
 Scenario: Translation fails due to API issues
 Given user sucessfully extracted text from the screenshot
-When the translation API is down or having internet issue
+When the translation API is down
 Then the app should display an error message "Translation service is currently unavailable, please try again."
