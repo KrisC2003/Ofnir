@@ -1,7 +1,8 @@
 Ofnir Features: Self Tests
 
-This directory contains intended features and tests that are to be executed with Ofnir.
+This directory contains feature tests that are to be executed with Ofnir
+These tests are used to:
 
-- Ensures Ofnir behaves as expected
-- Defines intended behavior of Ofnir
+- Ensure Ofnir behaves as expected
+- Define intended/expected behavior of Ofnir
 
