@@ -17,3 +17,8 @@ Scenario: Translation fails due to API issues
 Given the user has extracted text and requested translation
 When the translation API is down
 Then the app should display an error message "Translation service is currently unavailable."
+
+Scenario: Translation fails due to unrecognizable characters
+Given the user has extracted text and requested translation
+When the provided screenshot unregonizable hand writing/ non-supportive language 
+Then the app should display an error message "We cannot recognize the characters at the moment, please try again."
