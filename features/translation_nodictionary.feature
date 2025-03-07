@@ -8,11 +8,30 @@ Feature: Direct Translation without dictionary
         Given the OCR system has successfully extracted text from a cropped image
         And the dictionary setting is disabled
 
-    Scenario: Translate the given text using the primary API
-        When the system requests translation for the extracted text
-        Then the system should query the primary dictionary API for translations
-        And the system should display translated text as hoverable over the original text
+    Scenario: Translate using direct translation service
+        When the system requests a translation
+        Then the system uses a basic translation API or built-in translation
+        And the system displays the translated text without definitions or clickable metadata
 
-    Scenario: Allow user to switch translation language after translation
+    Scenario: Translate using offline translation table when available
+        Given the system is offline
+        And an offline translation table exists for the detected language
+        When the system requests a translation
+        Then the system uses the offline translation
+        And the system displays the translated text directly
+
+    Scenario: Warn user if no translation available
+        Given the system is offline
+        And no offline translation table exists for the detected language
+        When the system requests a translation
+        Then the system shows a message "Translation unavailable"
+
+    Scenario: Cache direct translation results
+        Given the same text is translated again
+        Then the system retrieves the cached result
+        And the system does not call the translation service again
+
+    Scenario: Allow user to toggle translated language visibility
         Given the text is already translated
-        When the user clicks a button or a hotkey
+        When the user clicks a button/hotkey
+        Then it toggles between the translated text and previous text
