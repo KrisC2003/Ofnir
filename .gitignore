@@ -30,3 +30,19 @@
 *.exe
 *.out
 *.app
+
+# ========== For Visual Studio upload ==========
+.vs/
+*.vcxproj.user
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+*.ipch
+*.cache
+*.log
+*.tlog
+*.obj
+*.pdb
+*.idb
+*.opendb
