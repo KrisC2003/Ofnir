@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <locale>
 #include <codecvt>
+#include "opencv2/opencv.hpp"
 
 using json = nlohmann::json;
 
@@ -66,7 +67,23 @@ int main() {
     std::cout << " Enter the image path: "; //you can type test.png to try out first, its in the folder
     std::getline(std::cin, imagePath);
 
-    Pix* image = pixRead(imagePath.c_str());
+    cv::Mat img = cv::imread(imagePath);
+    if (img.empty()) {
+        std::cerr << "can't read the photo, Please check Path¡£\n";
+        return 1;
+    }
+
+    cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);           // Grayscale
+    cv::GaussianBlur(img, img, cv::Size(5, 5), 0);        // Denoising
+    cv::threshold(img, img, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);  // Binarization
+
+
+    Pix* pixImage = pixCreate(img.cols, img.rows, 8);
+    for (int i = 0; i < img.rows; i++) {
+        for (int j = 0; j < img.cols; j++) {
+            pixSetPixel(pixImage, j, i, img.at<uchar>(i, j));
+        }
+    }
 
 
     /* test with photos in projrct file
@@ -84,7 +101,7 @@ int main() {
         return 1;
     }
 
-    api.SetImage(image);
+    api.SetImage(pixImage);
     api.Recognize(0);
 
     tesseract::ResultIterator* ri = api.GetIterator();
@@ -111,7 +128,7 @@ int main() {
     std::wcout << L"\n translation result£º\n" << utf8ToWstring(translated) << std::endl;
 
     api.End();
-    pixDestroy(&image);
+    pixDestroy(&pixImage);
 
     return 0;
 }
