@@ -1,2 +1,1 @@
 C:\Users\i5\source\repos\OCRProject\OCRTry\OCRTry\x64\Debug\OCRTry.vcxproj.Up2Date
-C:\Users\i5\source\repos\Ofnir\OCRTry\x64\Debug\OCRTry.vcxproj.Up2Date
