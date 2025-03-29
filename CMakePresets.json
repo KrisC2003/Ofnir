@@ -1,0 +1,55 @@
+{
+    "version": 2,
+    "configurePresets": [
+        {
+            "name": "release",
+            "displayName": "Release",
+            "generator": "Visual Studio 17 2022",
+            "description": "Base CMake",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "C:/Libraries/vcpkg"
+                },
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "environment": {
+                "CC": "cl",
+                "CXX": "cl"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "generator": "Visual Studio 17 2022",
+            "description": "Test CMake",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "C:/Libraries/vcpkg"
+                },
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "environment": {
+                "CC": "cl",
+                "CXX": "cl"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "build-debug",
+            "configurePreset": "debug"
+        }
+    ]
+}
