@@ -34,7 +34,7 @@ int main() {
    */
 
    //OCR API
-    std::string ocrResult = performOCRWithGoogleVision("processed.png");
+    std::string ocrResult = performOCRWithGoogleVision("processed.png",0.9f);
     
     std::wcout.imbue(std::locale("chs"));
     std::wcout << L"\n OCR result£º\n" << utf8ToWstring(ocrResult) << std::endl;
