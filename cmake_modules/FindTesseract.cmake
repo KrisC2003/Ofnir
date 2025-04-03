@@ -1,10 +1,9 @@
 # FindTesseract.cmake - Locate Tesseract OCR library
-set(Tesseract_DIR "C:/Libraries/tesseract")
+set(TESSERACT_DIR "C:/Libraries/tesseract")
 
 FIND_PATH(TESSERACT_INCLUDE_DIR 
 	NAMES tesseract/baseapi.h
 	PATHS
-	$ENV{TESSERACT_DIR}/build/include #PATH to include folder
 	C:/Libraries/tesseract-install/include
 
 )
