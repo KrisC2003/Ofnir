@@ -1,5 +1,5 @@
 // ocr_translate.cpp
-#include "ocrTranslate.hpp"
+#include "OcrTranslate.hpp"
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
@@ -80,15 +80,15 @@ std::string encodeImageToBase64(const std::string& imagePath) {
     return encoded;
 }
 
-std::string performOCRWithGoogleVision(const std::string& imagePath) {
-    std::string apiKey = "AIzaSyBKGpGr6xCOaISgDGoe-Vy_VAXK2nBWc9I";  // API Key
+std::string performOCRWithGoogleVision(const std::string& imagePath, float confidenceLevel) {
+    std::string apiKey = "AIzaSyBKGpGr6xCOaISgDGoe-Vy_VAXK2nBWc9I";  // Api Key
     std::string base64Image = encodeImageToBase64(imagePath);
 
     json requestBody = {
-        {"requests", { {
+        {"requests", {{
             {"image", {{"content", base64Image}}},
-            {"features", { {{"type", "TEXT_DETECTION"}} }}
-        } }}
+            {"features", {{{"type", "TEXT_DETECTION"}}}}
+        }}}
     };
 
     std::string response;
@@ -110,11 +110,32 @@ std::string performOCRWithGoogleVision(const std::string& imagePath) {
         curl_easy_cleanup(curl);
     }
 
+    std::string resultText;
+
     try {
         auto jsonResponse = json::parse(response);
-        return jsonResponse["responses"][0]["fullTextAnnotation"]["text"];
+        auto pages = jsonResponse["responses"][0]["fullTextAnnotation"]["pages"];
+        for (const auto& page : pages) {
+            for (const auto& block : page["blocks"]) {
+                for (const auto& paragraph : block["paragraphs"]) {
+                    for (const auto& word : paragraph["words"]) {
+                        float conf = word.value("confidence", 1.0f);
+                        if (conf >= confidenceLevel) {
+                            std::string wordText;
+                            for (const auto& symbol : word["symbols"]) {
+                                wordText += symbol["text"].get<std::string>();
+                            }
+                            resultText += wordText + " ";
+                        }
+                    }
+                    resultText += "\n";
+                }
+            }
+        }
     }
     catch (...) {
         return "";
     }
+
+    return resultText;
 }

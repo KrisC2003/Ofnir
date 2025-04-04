@@ -9,7 +9,7 @@
 #include <windows.h>
 #include <locale>
 #include <codecvt>
-#include <opencv2/opencv.hpp>
+#include "opencv2/opencv.hpp"
 #include <fstream>
 #include <sstream>
 #include <map>
@@ -32,4 +32,4 @@ std::string translateText(const std::string& text, const std::string& targetLang
 std::string encodeImageToBase64(const std::string& imagePath);
 
 // Google Cloud Vision API OCR
-std::string performOCRWithGoogleVision(const std::string& imagePath);
+std::string performOCRWithGoogleVision(const std::string& imagePath, float  confidenceLevel);

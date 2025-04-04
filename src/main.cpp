@@ -1,9 +1,9 @@
-#include "ocrTranslate.hpp"
+#include "OcrTranslate.hpp"
 
 
 
 int main() {
-    SetConsoleOutputCP(CP_UTF8);  
+    SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
 
@@ -22,7 +22,7 @@ int main() {
     cv::threshold(img, img, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);  // Binarization
     cv::imwrite("processed.png", img);
 
-  
+
 
 
     /* test with photos in projrct file
@@ -34,8 +34,8 @@ int main() {
    */
 
    //OCR API
-    std::string ocrResult = performOCRWithGoogleVision("processed.png");
-    
+    std::string ocrResult = performOCRWithGoogleVision("processed.png", 0.9f);
+
     std::wcout.imbue(std::locale("chs"));
     std::wcout << L"\n OCR result£º\n" << utf8ToWstring(ocrResult) << std::endl;
 
