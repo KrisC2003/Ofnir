@@ -25,10 +25,10 @@ set(CMAKE_CXX_STANDARD 17)
 #find_package(Tesseract REQUIRED)
 
 # Curl
-find_package(CURL REQUIRED)
+find_package(curl REQUIRED)
 
 # OpenCV
-find_package(OpenCV REQUIRED)
+find_package(opencv REQUIRED)
 
 # Add executable
 add_executable(${PROJECT_NAME} 
