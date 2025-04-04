@@ -11,7 +11,7 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_TOOLCHAIN_FILE": {
                     "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                    "type": "C:/Libraries/vcpkg"
+                    "type": "FILEPATH"
                 },
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl"
@@ -31,7 +31,7 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": {
                     "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                    "type": "C:/Libraries/vcpkg"
+                    "type": "FILEPATH"
                 },
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl"
@@ -39,6 +39,18 @@
             "environment": {
                 "CC": "cl",
                 "CXX": "cl"
+            }
+        },
+        {
+            "hidden": true,
+            "name": "Qt",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QTDIR}"
+            },
+            "vendor": {
+                "qt-project.org/Qt": {
+                    "checksum": "wVa86FgEkvdCTVp1/nxvrkaemJc="
+                }
             }
         }
     ],
@@ -51,5 +63,10 @@
             "name": "build-debug",
             "configurePreset": "debug"
         }
-    ]
+    ],
+    "vendor": {
+        "qt-project.org/Presets": {
+            "checksum": "7umL/QNy1XE/unbmXHuSiHQjBHQ="
+        }
+    }
 }
