@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD 17)
  set(CMAKE_AUTORCC ON)
  set(CMAKE_AUTOUIC ON)
  list(APPEND CMAKE_PREFIX_PATH "C:/Libraries/Qt/6.9.0/msvc2022_64")
- find_package(Qt6 COMPONENTS Widgets REQUIRED)
+ find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
 
 # Tesseract
 #list(APPEND CMAKE_PREFIX_PATH "C:/Libraries/tesseract-install")
@@ -32,8 +32,9 @@ find_package(opencv REQUIRED)
 
 # Add executable
 add_executable(${PROJECT_NAME} 
-    src/main.cpp
-    src/ocrTranslate.cpp
+    "src/main.cpp"
+    "src/ocrTranslate.cpp"
+    #"src/ocrScreenshot.cpp"
 )
 
 # Link directories
@@ -46,7 +47,21 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     #${Tesseract_LIBRARIES}
     ${OpenCV_LIBS}
+    Qt6::Core
+    Qt6::Gui
     Qt6::Widgets
     CURL::libcurl
 )
 
+# Testing build
+add_executable(Test "src/screenCaptureWidget.cpp")
+target_include_directories(Test PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/include
+)
+target_link_libraries(Test PRIVATE 
+    ${OpenCV_LIBS}
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+)

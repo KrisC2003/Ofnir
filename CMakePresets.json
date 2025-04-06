@@ -5,9 +5,7 @@
       "hidden": true,
       "name": "base",
       "generator": "Visual Studio 17 2022",
-
       "description": "This is the default preset for all the builds currently",
-
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TOOLCHAIN_FILE": {
@@ -63,7 +61,7 @@
   ],
   "vendor": {
     "qt-project.org/Presets": {
-      "checksum": "3R9MmwNcAFwbF4cb7KHWcUTn9q8="
+      "checksum": "39FE6q71fq7P6nUxFrCCGjSTBl0="
     }
   }
 }
