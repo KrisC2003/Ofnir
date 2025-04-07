@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 6,
   "configurePresets": [
     {
       "hidden": true,
@@ -61,7 +61,7 @@
   ],
   "vendor": {
     "qt-project.org/Presets": {
-      "checksum": "39FE6q71fq7P6nUxFrCCGjSTBl0="
+      "checksum": "3boMkblziVTogo2bzjc90fy9V4s="
     }
   }
 }
