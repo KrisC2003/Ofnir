@@ -1,0 +1,21 @@
+OCR Result:
+Adefine 1000 10 NIN 
+ul . autopil ( this ) ; 
+// WEERSTAKAL SAR 
+Saxifsiput = new Wuthiết ( this ) ; 
+708 , 
+taxtinignt- > urtismetry ( 36 , 658 , TUE , 2009 ; 
+testOutput- > setReadOnly ( true ) . 
+stillendőnly 
+
+
+Translation Result:
+Adefine 1000 10 NIN 
+ul . autopil ( this ) ; 
+// WEERSTAKAL SAR 
+Saxifsiput = new Wuthiết ( this ) ; 
+708 , 
+taxtinignt- > urtismetry ( 36 , 658 , TUE , 2009 ; 
+testOutput- > setReadOnly ( true ) . 
+stillendőnly 
+
