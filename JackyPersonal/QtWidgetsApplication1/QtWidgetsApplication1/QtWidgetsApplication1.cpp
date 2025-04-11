@@ -1,7 +1,7 @@
 ﻿#include "QtWidgetsApplication1.h"
 #include "ScreenshotOverlay.h"
 #include "QTCV.h"
-#include "OcrTranslate.h"
+#include "OcrAndTranslate.h"
 #include "HotkeyFilter.h"
 #include <opencv2/opencv.hpp>
 #include <QFile>
@@ -17,8 +17,8 @@
 #include "OutlinedLabel.h"
 #include <QRegularExpression>
 #include <QFontMetrics>
-#include <QRegularExpression>
 #include <QTextDocument>  
+#include <QPropertyAnimation>
 #include "DraggablePopup.h"
 
 
@@ -36,10 +36,10 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget* parent)
     //textOutput->setStyleSheet("font-size: 16px; background-color: #f0f0f0; color: #222;");
 
 
-    // 註冊全域熱鍵 Ctrl + Alt + Z
+    
     RegisterHotKey((HWND)this->winId(), HOTKEY_ID, MOD_ALT, 0x58); // alt +X 
 
-    // 安裝 native event filter
+   
     HotkeyFilter* filter = new HotkeyFilter(this);
     qApp->installNativeEventFilter(filter);
     connect(filter, &HotkeyFilter::hotkeyPressed, this, &QtWidgetsApplication1::captureAndShowScreenshot);
@@ -84,15 +84,13 @@ void QtWidgetsApplication1::captureAndShowScreenshot()
         });
 }
 
-#include "DraggablePopup.h"
+
 
 QWidget* QtWidgetsApplication1::createResultPopup(const QString& text, const QRect& anchorRect)
 {
     DraggablePopup* popup = new DraggablePopup();
 
-    // outline
     popup->setStyleSheet("background-color: rgba(255, 255, 255, 230); border: 2px solid black;");
-
     QVBoxLayout* layout = new QVBoxLayout(popup);
     layout->setContentsMargins(10, 10, 10, 10);
 
@@ -111,18 +109,50 @@ QWidget* QtWidgetsApplication1::createResultPopup(const QString& text, const QRe
     topLayout->addWidget(closeButton);
     layout->addLayout(topLayout);
 
-    // words Label
+    // show 
     OutlinedLabel* label = new OutlinedLabel(popup);
     label->setText(text);
     label->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     label->setWordWrap(true);
-    label->setFixedSize(600, 600); // fix size
+    label->setFixedSize(600, 600);
     layout->addWidget(label);
 
-    popup->setFixedSize(620, 620); // +20 for the close button
-    QPoint rightCenter = QPoint(anchorRect.right(), anchorRect.top() + anchorRect.height() / 2 - popup->height() / 2);
-    popup->move(rightCenter + QPoint(10, 0));
+    popup->setFixedSize(620, 620);
+
+    // paraelle
+    QRect screenGeometry = QGuiApplication::primaryScreen()->availableGeometry();
+    int padding = 10;
+
+    // default right side
+    QPoint targetPos = QPoint(
+        anchorRect.right() + padding,
+        anchorRect.top() + (anchorRect.height() - popup->height()) / 2
+    );
+
+    // show at left if not enough space
+    if (targetPos.x() + popup->width() > screenGeometry.right()) {
+        targetPos.setX(anchorRect.left() - popup->width() - padding);
+    }
+
+    // show higher or lower if not enough space
+    if (targetPos.y() < padding) {
+        targetPos.setY(padding);
+    }
+    else if (targetPos.y() + popup->height() > screenGeometry.bottom()) {
+        targetPos.setY(screenGeometry.bottom() - popup->height() - padding);
+    }
+
+    popup->move(targetPos);
+
+    
+    popup->setWindowOpacity(0.0);
     popup->show();
 
+    QPropertyAnimation* animation = new QPropertyAnimation(popup, "windowOpacity");
+    animation->setDuration(200);  // 
+    animation->setStartValue(0.0);
+    animation->setEndValue(1.0);
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
+    
     return popup;
 }

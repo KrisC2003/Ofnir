@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
  
 # Qt6
-list(APPEND CMAKE_PREFIX_PATH "C:/Libraries/Qt/6.9.0/msvc2022_64")
+list(APPEND CMAKE_PREFIX_PATH "C:/Qt/6.9.0/msvc2022_64")
 find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
 
 # Tesseract
