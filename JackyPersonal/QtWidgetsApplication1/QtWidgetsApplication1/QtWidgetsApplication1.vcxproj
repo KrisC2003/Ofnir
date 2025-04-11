@@ -97,9 +97,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Ofnir\OCRTry\OcrTranslate.cpp" />
     <ClCompile Include="DraggablePopup.cpp" />
     <ClCompile Include="HotkeyFilter.cpp" />
+    <ClCompile Include="OcrAndTranslate.cpp" />
     <ClCompile Include="OutlinedLabel.cpp" />
     <ClCompile Include="QTCV.cpp" />
     <ClCompile Include="ScreenshotOverlay.cpp" />
@@ -115,7 +115,7 @@
   <ItemGroup>
     <QtMoc Include="HotkeyFilter.h" />
     <QtMoc Include="DraggablePopup.h" />
-    <ClInclude Include="OcrTranslate.h" />
+    <ClInclude Include="OcrAndTranslate.h" />
     <QtMoc Include="OutlinedLabel.h" />
     <ClInclude Include="QTCV.h" />
   </ItemGroup>
