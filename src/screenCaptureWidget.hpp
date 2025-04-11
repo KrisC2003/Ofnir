@@ -3,6 +3,9 @@
 #include <QScreen>
 #include <QApplication>
 #include <QWidget>
+#include <QPixmap>
+#include <QPaintEvent>
+#include <QPainter>
 
 class QMouseEvent;
 class QPaintEvent;
@@ -28,15 +31,17 @@ protected:
 private:
 	QRect updateRect();
 
-
 	// Class Members
 	QScreen* m_screen;
 
+	QPixmap m_cachedPixmap;
+	QPixmap m_darkOverlay;
+	QPixmap m_overlay;
 
 	// Mouse tracking
 	QPoint m_mousePressedPos;
-	QPoint m_startMouseMovePos;
-	QPoint m_endMouseMovePos;
+	QPoint m_selectionStartPos;
+	QPoint m_selectionEndPos;
 
 	bool m_mouseIsPressed;
 
