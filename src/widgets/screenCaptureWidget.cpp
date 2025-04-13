@@ -1,4 +1,4 @@
-#include "screenCaptureWidget.hpp"
+#include "screenCaptureWidget.h"
 
 screenCaptureWidget::screenCaptureWidget(QScreen* screen, QWidget* parent)
 	: QWidget(parent)

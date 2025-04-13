@@ -7,7 +7,7 @@
 #include <QFontDialog>
 
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
@@ -38,14 +38,14 @@ void MainWindow::changeFont() {
     if (ok) {
         QColor color = QColorDialog::getColor(fontColor, this, "Select Font Color");
 
-        if (color.isValid()) {       
+        if (color.isValid()) {
             fontColor = color;
             QString style = QString("color: %1; font-family: %2; font-size: %3pt; font-weight: %4; font-style: %5;")
-                                .arg(fontColor.name())   // Apply font color
-                                .arg(font.family())      // Apply font fmaily
-                                .arg(font.pointSize())   // Apply size
-                                .arg(font.weight() == QFont::Bold ? "bold" : "normal") // Apply bold
-                                .arg(font.italic() ? "italic" : "normal"); // Apply italic
+                .arg(fontColor.name())   // Apply font color
+                .arg(font.family())      // Apply font fmaily
+                .arg(font.pointSize())   // Apply size
+                .arg(font.weight() == QFont::Bold ? "bold" : "normal") // Apply bold
+                .arg(font.italic() ? "italic" : "normal"); // Apply italic
             ui->centralwidget->setStyleSheet(style);
             ui->centralwidget->setFont(font);
         }
@@ -69,35 +69,37 @@ void MainWindow::changeBackgroundColor() {
 
 
 // Close event override as hide
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent(QCloseEvent* event) {
     event->ignore();
     this->hide();
 }
 
 // Mouse press (For dragging)
-void MainWindow::mousePressEvent(QMouseEvent *event) {
+void MainWindow::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton && event->pos().y() <= m_dragAreaHeight) {
         m_dragPosition = event->globalPosition().toPoint() - frameGeometry().topLeft();
         m_dragging = true;  // Enable dragging
         event->accept();
-    } else {
+    }
+    else {
         m_dragging = false;  // Disable dragging if clicked outside the draggable area
         event->ignore();
     }
 }
 
 // Move move (For dragging)
-void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+void MainWindow::mouseMoveEvent(QMouseEvent* event) {
     if (m_dragging && (event->buttons() & Qt::LeftButton)) {
         move(event->globalPosition().toPoint() - m_dragPosition);
         event->accept();
-    } else {
+    }
+    else {
         event->ignore();
     }
 }
 
 // Move release (For dragging)
-void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
+void MainWindow::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         m_dragging = false;  // Stop dragging when mouse is released
         event->accept();
