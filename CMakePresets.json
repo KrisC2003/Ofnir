@@ -9,7 +9,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TOOLCHAIN_FILE": {
-          "value": "C:/Libraries/vcpkg/scripts/buildsystems/vcpkg.cmake",
+          "value": "C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
           "type": "FILEPATH"
         },
         "CMAKE_C_COMPILER": "cl",
@@ -61,7 +61,7 @@
   ],
   "vendor": {
     "qt-project.org/Presets": {
-      "checksum": "3boMkblziVTogo2bzjc90fy9V4s="
+      "checksum": "hmHKGcauB3yvj2UIUgQt9Ew7BAM="
     }
   }
 }
