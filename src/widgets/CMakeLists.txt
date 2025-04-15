@@ -2,13 +2,13 @@
 # add_subdirectory if nesting another folder into widget
 
 target_sources(${PROJECT_NAME} PRIVATE 
-	mainwindow.cpp
+	infowindow.cpp
 	ocrTranslate.cpp
 	screenCaptureWidget.cpp
 
-	mainwindow.h
+	infowindow.h
 	ocrTranslate.h
 	screenCaptureWidget.h
 
-	mainwindow.ui
+	infowindow.ui
 )

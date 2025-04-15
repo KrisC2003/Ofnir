@@ -21,6 +21,7 @@ else()
 endif()
 
 add_subdirectory(widgets)
+add_subdirectory(settings)
 
 target_sources(${PROJECT_NAME} 
     PRIVATE
