@@ -13,7 +13,12 @@ set(CMAKE_AUTOUIC ON)
 find_package(curl REQUIRED)
 find_package(opencv REQUIRED)
 
-add_executable(${PROJECT_NAME})
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_executable(${PROJECT_NAME} WIN32)
+else()
+    add_executable(${PROJECT_NAME})
+endif()
 
 add_subdirectory(widgets)
 
