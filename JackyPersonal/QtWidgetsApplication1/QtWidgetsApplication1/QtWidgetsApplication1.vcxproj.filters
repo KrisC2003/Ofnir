@@ -43,19 +43,13 @@
     <ClCompile Include="ScreenshotOverlay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QTCV.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="HotkeyFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OutlinedLabel.cpp">
+    <ClCompile Include="FontSettingsDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DraggablePopup.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OcrAndTranslate.cpp">
+    <ClCompile Include="OCRUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -66,18 +60,15 @@
     <QtMoc Include="HotkeyFilter.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="OutlinedLabel.h">
+    <QtMoc Include="FontSettingsDialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="DraggablePopup.h">
+    <QtMoc Include="VisualComponents.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="QTCV.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OcrAndTranslate.h">
+    <ClInclude Include="OCRUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

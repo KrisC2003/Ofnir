@@ -68,6 +68,11 @@
       <AdditionalIncludeDirectories>C:\vcpkg\installed\x64-windows\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\vcpkg\installed\x64-windows\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -97,12 +102,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DraggablePopup.cpp" />
+    <ClCompile Include="FontSettingsDialog.cpp" />
     <ClCompile Include="HotkeyFilter.cpp" />
-    <ClCompile Include="OcrAndTranslate.cpp" />
-    <ClCompile Include="OutlinedLabel.cpp" />
-    <ClCompile Include="QTCV.cpp" />
+    <ClCompile Include="OCRUtil.cpp" />
     <ClCompile Include="ScreenshotOverlay.cpp" />
+    <QtMoc Include="VisualComponents.h" />
     <QtRcc Include="QtWidgetsApplication1.qrc" />
     <QtUic Include="QtWidgetsApplication1.ui" />
     <QtMoc Include="QtWidgetsApplication1.h" />
@@ -114,10 +118,8 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="HotkeyFilter.h" />
-    <QtMoc Include="DraggablePopup.h" />
-    <ClInclude Include="OcrAndTranslate.h" />
-    <QtMoc Include="OutlinedLabel.h" />
-    <ClInclude Include="QTCV.h" />
+    <QtMoc Include="FontSettingsDialog.h" />
+    <ClInclude Include="OCRUtil.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
