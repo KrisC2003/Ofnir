@@ -3,12 +3,12 @@
 
 target_sources(${PROJECT_NAME} PRIVATE 
 	infowindow.cpp
-	ocrTranslate.cpp
-	screenCaptureWidget.cpp
+	ocrtranslate.cpp
+	screencapturewidget.cpp
 
 	infowindow.h
-	ocrTranslate.h
-	screenCaptureWidget.h
+	ocrtranslate.h
+	screencapturewidget.h
 
 	infowindow.ui
-)
+ )

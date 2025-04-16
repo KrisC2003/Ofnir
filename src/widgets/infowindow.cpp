@@ -10,12 +10,12 @@
 
 #define HOTKEY_ID 1001
 
-InfoWindow::InfoWindow(QWidget* parent)
-    : QWidget(parent), ui(new Ui::InfoWindow) {
+InfoWindow::InfoWindow(QDialog* parent)
+    : QDialog(parent), ui(new Ui::InfoWindow) {
     ui->setupUi(this);
     setWindowFlags(Qt::FramelessWindowHint);
     //connects ui buttons to functions
-    connect(ui->closeButton, &QPushButton::clicked, this, &QMainWindow::close);
+    connect(ui->closeButton, &QPushButton::clicked, this, &InfoWindow::close);
     connect(ui->colorButton, &QPushButton::clicked, this, &InfoWindow::changeBackgroundColor);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &InfoWindow::onTabChanged);
     connect(ui->fontStyle, &QPushButton::clicked, this, &InfoWindow::changeFont);
@@ -46,8 +46,8 @@ void InfoWindow::changeFont() {
                 .arg(font.pointSize())   // Apply size
                 .arg(font.weight() == QFont::Bold ? "bold" : "normal") // Apply bold
                 .arg(font.italic() ? "italic" : "normal"); // Apply italic
-            ui->centralwidget->setStyleSheet(style);
-            ui->centralwidget->setFont(font);
+            ui->tabWidget->setStyleSheet(style);
+            ui->tabWidget->setFont(font);
         }
     }
 }
@@ -65,7 +65,7 @@ void InfoWindow::changeBackgroundColor() {
     }
 }
 
-// Close event override as hide
+// Close event override as hideg
 void InfoWindow::closeEvent(QCloseEvent* event) {
     event->ignore();
     this->hide();

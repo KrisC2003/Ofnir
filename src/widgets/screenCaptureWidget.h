@@ -19,8 +19,8 @@ public:
 
 	~screenCaptureWidget() = default;
 
-private slots:
-public:
+public slots:
+	void initScreenCapture();
 
 protected:
 	void mousePressEvent(QMouseEvent* event) override;

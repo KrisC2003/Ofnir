@@ -5,9 +5,10 @@ screenCaptureWidget::screenCaptureWidget(QScreen* screen, QWidget* parent)
 	, m_screen(screen)
 	, m_mouseIsPressed(false)
 {
-	setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
+	setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool | Qt::FramelessWindowHint);
 	setAttribute(Qt::WA_TranslucentBackground);
 	setAttribute(Qt::WA_DeleteOnClose);
+	setCursor(Qt::CrossCursor);
 	setMouseTracking(true);
 	activateWindow();
 	showFullScreen();
@@ -22,19 +23,22 @@ screenCaptureWidget::screenCaptureWidget(QScreen* screen, QWidget* parent)
 //screenCaptureWidget::~screenCaptureWidget() {
 //
 //}
+
+void screenCaptureWidget::initScreenCapture() {
+
+}
+
 QRect screenCaptureWidget::updateRect() {
 	return QRect(m_selectionStartPos, m_selectionEndPos).normalized();
 };
+
 void screenCaptureWidget::mousePressEvent(QMouseEvent* event) 
 {
 	if (event->button() != Qt::LeftButton) return;
 
 	m_mouseIsPressed = true;
-	m_selectionStartPos = event->pos();
-	m_selectionEndPos = event->pos();
+	m_selectionStartPos = m_selectionEndPos = event->pos();
 	m_cachedPixmap = m_screen->grabWindow(0);
-
-	setCursor(Qt::CrossCursor);
 }
 void screenCaptureWidget::mouseMoveEvent(QMouseEvent* event)
 {

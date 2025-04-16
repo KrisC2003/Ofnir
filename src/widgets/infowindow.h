@@ -1,18 +1,18 @@
 #pragma once
 
-#include <QWidget>
+#include <QDialog>
 
 
 namespace Ui {
     class InfoWindow;
 }
 
-class InfoWindow : public QWidget
+class InfoWindow : public QDialog
 {
     Q_OBJECT
 
     public:
-        explicit InfoWindow(QWidget* parent = nullptr);
+        explicit InfoWindow(QDialog* parent = nullptr);
 
         ~InfoWindow();
 

@@ -13,8 +13,8 @@ void configureApp() {
 
 }
 // TODO: potentially separate tray icon step into its own widget
-void setupSystemTray() {
-    InfoWindow infoWindow;
+void setupSystemTray(QApplication &app) {
+    InfoWindow* infoWindow = new InfoWindow();
 
     QIcon appIcon(":/icon.png");
     QSystemTrayIcon* trayIcon = new QSystemTrayIcon(appIcon);
@@ -24,10 +24,10 @@ void setupSystemTray() {
     QAction* quitAction = new QAction("Exit", menu);
 
     // connects Setting action
-    QObject::connect(settingAction, &QAction::triggered, [&]() {
-        infoWindow.show();
-        infoWindow.raise();
-        infoWindow.activateWindow();
+    QObject::connect(settingAction, &QAction::triggered, [infoWindow]() {
+        infoWindow->show();
+        infoWindow->raise();
+        infoWindow->activateWindow();
         });
     // connects Exit action
     QObject::connect(quitAction, &QAction::triggered, &app, &QApplication::quit);
@@ -43,8 +43,7 @@ void setupSystemTray() {
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
 
-
-    setupSystemTray();
+    setupSystemTray(app);
 
     return app.exec();
 }
