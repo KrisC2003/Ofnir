@@ -25,6 +25,7 @@ public:
 private slots:
     void chooseTextColor();
     void chooseOutlineColor();
+    
 
 private:
     QFontComboBox* m_fontBox;

@@ -43,13 +43,16 @@
     <ClCompile Include="ScreenshotOverlay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HotkeyFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="FontSettingsDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OCRUtil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qhotkey.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qhotkey_win.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,13 +60,16 @@
     <QtMoc Include="ScreenshotOverlay.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="HotkeyFilter.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="FontSettingsDialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="VisualComponents.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="qhotkey.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="qhotkey_p.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

@@ -1,10 +1,12 @@
+#include <QApplication>
 #include "QtWidgetsApplication1.h"
-#include <QtWidgets/QApplication>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    QApplication a(argc, argv);
-    QtWidgetsApplication1 w;
-    w.show();
-    return a.exec();
+    QApplication app(argc, argv);
+
+    QtWidgetsApplication1 mainWindow;
+    mainWindow.show();  
+
+    return app.exec();
 }
