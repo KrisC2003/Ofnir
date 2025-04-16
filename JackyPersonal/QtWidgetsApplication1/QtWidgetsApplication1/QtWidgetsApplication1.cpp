@@ -1,26 +1,21 @@
 ﻿#include "QtWidgetsApplication1.h"
 #include "ScreenshotOverlay.h"
-#include "QTCV.h"
-#include "OcrAndTranslate.h"
+#include "OCRUtil.h"
 #include "HotkeyFilter.h"
+#include "FontSettingsDialog.h"
+#include "VisualComponents.h"
 #include <opencv2/opencv.hpp>
 #include <QFile>
 #include <QDebug>
 #include <fstream>
 #include <QScreen>
 #include <QGuiApplication>
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 #include <QVBoxLayout>
 #include <QPushButton>
-#include "OutlinedLabel.h"
 #include <QRegularExpression>
 #include <QFontMetrics>
-#include <QTextDocument>  
+#include <QTextDocument>
 #include <QPropertyAnimation>
-#include "DraggablePopup.h"
-
 
 #define HOTKEY_ID 1001
 
@@ -29,20 +24,47 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget* parent)
 {
     ui.setupUi(this);
 
-    // 
-   // textOutput = new QTextEdit(this);
-    //textOutput->setGeometry(820, 10, 300, 580);
-    //textOutput->setReadOnly(true);
-    //textOutput->setStyleSheet("font-size: 16px; background-color: #f0f0f0; color: #222;");
+    // load setting
+    QFont dummyFont;
+    QColor dummyText, dummyOutline;
+    QKeySequence loadedHotkey;
+    loadSettingsFromJson("user_settings.json", dummyFont, dummyText, dummyOutline, loadedHotkey);
 
+    QKeyCombination kc = loadedHotkey[0];
+    int key = kc.key();
+    int modifiers = 0;
+    if (kc.keyboardModifiers().testFlag(Qt::ControlModifier)) modifiers |= MOD_CONTROL;
+    if (kc.keyboardModifiers().testFlag(Qt::AltModifier))     modifiers |= MOD_ALT;
+    if (kc.keyboardModifiers().testFlag(Qt::ShiftModifier))   modifiers |= MOD_SHIFT;
+    RegisterHotKey((HWND)this->winId(), HOTKEY_ID, modifiers, key);
 
-    
-    RegisterHotKey((HWND)this->winId(), HOTKEY_ID, MOD_ALT, 0x58); // alt +X 
-
-   
+    // Install global hotkey event filter
     HotkeyFilter* filter = new HotkeyFilter(this);
     qApp->installNativeEventFilter(filter);
     connect(filter, &HotkeyFilter::hotkeyPressed, this, &QtWidgetsApplication1::captureAndShowScreenshot);
+
+    // Settings button
+    QPushButton* settingBtn = new QPushButton("Settings", this);
+    settingBtn->setGeometry(10, 10, 100, 30);
+    connect(settingBtn, &QPushButton::clicked, this, [this]() {
+        FontSettingsDialog dlg(this);
+        if (dlg.exec() == QDialog::Accepted) {
+            // Re-register hotkey
+            QFont dummyFont;
+            QColor dummyText, dummyOutline;
+            QKeySequence newHotkey;
+            loadSettingsFromJson("user_settings.json", dummyFont, dummyText, dummyOutline, newHotkey);
+
+            UnregisterHotKey((HWND)this->winId(), HOTKEY_ID);
+            QKeyCombination kc = newHotkey[0];
+            int key = kc.key();
+            int modifiers = 0;
+            if (kc.keyboardModifiers().testFlag(Qt::ControlModifier)) modifiers |= MOD_CONTROL;
+            if (kc.keyboardModifiers().testFlag(Qt::AltModifier))     modifiers |= MOD_ALT;
+            if (kc.keyboardModifiers().testFlag(Qt::ShiftModifier))   modifiers |= MOD_SHIFT;
+            RegisterHotKey((HWND)this->winId(), HOTKEY_ID, modifiers, key);
+        }
+        });
 }
 
 QtWidgetsApplication1::~QtWidgetsApplication1()
@@ -55,46 +77,36 @@ void QtWidgetsApplication1::captureAndShowScreenshot()
     ScreenshotOverlay* overlay = new ScreenshotOverlay();
     connect(overlay, &ScreenshotOverlay::screenshotTakenWithRect, this,
         [this](const QPixmap& pixmap, const QRect& rect) {
-
-            // image preprocess
+            // Image preprocessing
             cv::Mat img = QPixmapToMat(pixmap);
             cv::cvtColor(img, img, cv::COLOR_RGB2GRAY);
             cv::GaussianBlur(img, img, cv::Size(5, 5), 0);
             cv::threshold(img, img, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
             cv::imwrite("processed.png", img);
 
-            // OCR and translate
+            //  OCR and translation
             std::string ocrResult = performOCRWithGoogleVision("processed.png", 0.9f);
-            std::wstring ocrText = utf8ToWstring(ocrResult);
-            std::string translated = translateText(ocrResult, "en");
-            std::wstring translatedText = utf8ToWstring(translated);
+            std::wstring translatedText = utf8ToWstring(translateText(ocrResult, "en"));
+            QString display = QString::fromStdWString(translatedText);
 
-            // to words
-            QString display = QString::fromStdWString(
-               translatedText
-            );
-
-            
             createResultPopup(display, rect);
-
-            //  write in file
-            //std::ofstream outFile("output.txt", std::ios::out | std::ios::binary);
-            //outFile << "OCR Result:\n" << ocrResult << "\n\n";
-            //outFile << "Translation Result:\n" << translated << std::endl;
         });
 }
 
-
-
 QWidget* QtWidgetsApplication1::createResultPopup(const QString& text, const QRect& anchorRect)
 {
-    DraggablePopup* popup = new DraggablePopup();
+    // read JSON
+    QFont font;
+    QColor textColor, outlineColor;
+    QKeySequence dummy;
+    loadSettingsFromJson("user_settings.json", font, textColor, outlineColor, dummy);
 
+    DraggablePopup* popup = new DraggablePopup();
     popup->setStyleSheet("background-color: rgba(255, 255, 255, 230); border: 2px solid black;");
+
     QVBoxLayout* layout = new QVBoxLayout(popup);
     layout->setContentsMargins(10, 10, 10, 10);
 
-    // close button
     QPushButton* closeButton = new QPushButton("❌", popup);
     closeButton->setStyleSheet(
         "QPushButton { color: black; background-color: transparent; border: none; font-size: 16px; }"
@@ -109,32 +121,26 @@ QWidget* QtWidgetsApplication1::createResultPopup(const QString& text, const QRe
     topLayout->addWidget(closeButton);
     layout->addLayout(topLayout);
 
-    // show 
     OutlinedLabel* label = new OutlinedLabel(popup);
     label->setText(text);
-    label->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    label->setFont(font);
+    label->setTextColor(textColor);
+    label->setOutlineColor(outlineColor);
     label->setWordWrap(true);
-    label->setFixedSize(600, 600);
+    label->setFixedSize(650, 700);
     layout->addWidget(label);
 
-    popup->setFixedSize(620, 620);
+    popup->setFixedSize(670, 720);
 
-    // paraelle
     QRect screenGeometry = QGuiApplication::primaryScreen()->availableGeometry();
     int padding = 10;
-
-    // default right side
     QPoint targetPos = QPoint(
         anchorRect.right() + padding,
         anchorRect.top() + (anchorRect.height() - popup->height()) / 2
     );
-
-    // show at left if not enough space
     if (targetPos.x() + popup->width() > screenGeometry.right()) {
         targetPos.setX(anchorRect.left() - popup->width() - padding);
     }
-
-    // show higher or lower if not enough space
     if (targetPos.y() < padding) {
         targetPos.setY(padding);
     }
@@ -143,16 +149,14 @@ QWidget* QtWidgetsApplication1::createResultPopup(const QString& text, const QRe
     }
 
     popup->move(targetPos);
-
-    
     popup->setWindowOpacity(0.0);
     popup->show();
 
     QPropertyAnimation* animation = new QPropertyAnimation(popup, "windowOpacity");
-    animation->setDuration(200);  // 
+    animation->setDuration(200);
     animation->setStartValue(0.0);
     animation->setEndValue(1.0);
     animation->start(QAbstractAnimation::DeleteWhenStopped);
-    
+
     return popup;
 }
