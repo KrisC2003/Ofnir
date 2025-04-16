@@ -1,23 +1,22 @@
+// QtWidgetsApplication1.h
 #pragma once
-
-#include <QMainWindow>
-#include <QLabel>
-#include <QShortcut>
+#include "qhotkey.h"
+#include <QDialog>
+#include <QFont>
+#include <QColor>
 #include <QKeySequence>
+#include <QTextEdit>
+#include <QShortcut>
+#include <QPushButton>
 #include "ui_QtWidgetsApplication1.h"
 
-#define HOTKEY_ID 1001
+class QtWidgetsApplication1 : public QDialog
 
-#ifdef Q_OS_WIN
-#include <Windows.h>
-#endif
-
-class QtWidgetsApplication1 : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit QtWidgetsApplication1(QWidget* parent = nullptr);
+    QtWidgetsApplication1(QWidget* parent = nullptr);
     ~QtWidgetsApplication1();
 
 private slots:
@@ -25,9 +24,9 @@ private slots:
 
 private:
     QWidget* createResultPopup(const QString& text, const QRect& anchorRect);
-    void applyUserHotkey();  
 
 private:
     Ui::QtWidgetsApplication1Class ui;
-    QShortcut* screenshotShortcut = nullptr;
+    QTextEdit* textOutput;
+    QHotkey* m_hotkey = nullptr;
 };

@@ -103,8 +103,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FontSettingsDialog.cpp" />
-    <ClCompile Include="HotkeyFilter.cpp" />
     <ClCompile Include="OCRUtil.cpp" />
+    <ClCompile Include="qhotkey.cpp" />
+    <ClCompile Include="qhotkey_win.cpp" />
     <ClCompile Include="ScreenshotOverlay.cpp" />
     <QtMoc Include="VisualComponents.h" />
     <QtRcc Include="QtWidgetsApplication1.qrc" />
@@ -117,7 +118,8 @@
     <QtMoc Include="ScreenshotOverlay.h" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="HotkeyFilter.h" />
+    <QtMoc Include="qhotkey_p.h" />
+    <QtMoc Include="qhotkey.h" />
     <QtMoc Include="FontSettingsDialog.h" />
     <ClInclude Include="OCRUtil.h" />
   </ItemGroup>
