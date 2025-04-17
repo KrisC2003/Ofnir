@@ -20,6 +20,7 @@ else()
     add_executable(${PROJECT_NAME})
 endif()
 
+add_subdirectory(core)
 add_subdirectory(widgets)
 add_subdirectory(settings)
 

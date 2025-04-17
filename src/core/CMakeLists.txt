@@ -3,6 +3,8 @@
 
 target_sources(${PROJECT_NAME} PRIVATE 
 	imgpreprocessing.cpp
-	
+	ofnirdaemon.cpp
+
 	imgpreprocessing.h
+	ofnirdaemon.h
 )

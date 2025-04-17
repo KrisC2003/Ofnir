@@ -11,7 +11,8 @@
 #define HOTKEY_ID 1001
 
 InfoWindow::InfoWindow(QDialog* parent)
-    : QDialog(parent), ui(new Ui::InfoWindow) {
+    : QDialog(parent), ui(new Ui::InfoWindow)
+{
     ui->setupUi(this);
     setWindowFlags(Qt::FramelessWindowHint);
     //connects ui buttons to functions
