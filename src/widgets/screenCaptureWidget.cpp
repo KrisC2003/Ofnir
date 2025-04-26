@@ -62,7 +62,7 @@ void screenCaptureWidget::mouseReleaseEvent(QMouseEvent* event)
 	pix_map.save("screenshot.png", "PNG", 10);
 
 	setCursor(Qt::ArrowCursor);
-	close(); //closes after screenshot
+	hide(); //hide after screenshot
 }
 
 void screenCaptureWidget::paintEvent(QPaintEvent* event)

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <QApplication>
 #include <QSystemTrayIcon>
 #include <QMenu>
@@ -5,6 +7,9 @@
 #include <QIcon>
 
 #include "infowindow.h"
+
+class QMenu;
+class InfoWindow;
 
 class TrayIcon : public QSystemTrayIcon
 {
@@ -15,6 +20,6 @@ public:
 
 private:
 	void initMenu();
-	QMenu* m_menu;
-	InfoWindow* m_infoWindow;
+	QMenu* m_menu = nullptr;
+	InfoWindow* m_infoWindow = nullptr;
 };

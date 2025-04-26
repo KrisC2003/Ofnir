@@ -29,7 +29,7 @@ target_sources(${PROJECT_NAME}
     main.cpp 
 	resource.qrc
 )
-# Link directories
+# Link directories  
 target_include_directories(${PROJECT_NAME} 
     PUBLIC
     #${Tesseract_INCLUDE_DIRS} 

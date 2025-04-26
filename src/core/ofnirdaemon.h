@@ -1,9 +1,12 @@
 #pragma once
 #include <QApplication>
 #include <QObject>
+#include "src/widgets/trayicon.h"
+#include "src/widgets/screencapturewidget.h"
 
+class globalHotkeyFilter;
+class screenCaptureWidget;
 class TrayIcon;
-class ScreenCaptureWidget;
 
 // should handle initialization and background processes (like data)
 
@@ -20,5 +23,7 @@ private:
 	void initTrayIcon();
 	void initHotkeys();
 
-	TrayIcon* m_trayIcon;
+	globalHotkeyFilter* hotkeyFilter = nullptr;
+	screenCaptureWidget* m_captureWidget = nullptr;
+	TrayIcon* m_trayIcon = nullptr;
 };
