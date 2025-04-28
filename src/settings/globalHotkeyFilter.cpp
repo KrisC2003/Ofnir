@@ -137,7 +137,7 @@ quint32 globalHotkeyFilter::getSpecialVirtualKeyCode(Qt::Key keycode) {
 }
 
 bool globalHotkeyFilter::registerShortcut() {
-    m_savedHotkey = { nativeKeycode(Qt::Key_X), nativeModifier(Qt::AltModifier) };
+    m_savedHotkey = { nativeKeycode(Qt::Key_X), nativeModifier(Qt::AltModifier) }; // test temp
     RegisterHotKey(NULL, 1, m_savedHotkey.modifier | MOD_NOREPEAT, m_savedHotkey.keycode);
     return true;
 }

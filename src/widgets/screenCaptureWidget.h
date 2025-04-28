@@ -20,14 +20,13 @@ public:
 	~screenCaptureWidget() = default;
 
 public slots:
-	void initScreenCapture();
 
 protected:
 	void mousePressEvent(QMouseEvent* event) override;
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void paintEvent(QPaintEvent* event) override;
-
+	//void hideEvent(QHideEvent* event) override;
 private:
 	QRect updateRect();
 
@@ -36,7 +35,6 @@ private:
 
 	QPixmap m_cachedPixmap;
 	QPixmap m_darkOverlay;
-	QPixmap m_overlay;
 
 	// Mouse tracking
 	QPoint m_mousePressedPos;
@@ -44,6 +42,6 @@ private:
 	QPoint m_selectionEndPos;
 
 	bool m_mouseIsPressed;
-
+	bool m_overlayVisible;
 };
 

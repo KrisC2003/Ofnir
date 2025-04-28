@@ -23,6 +23,7 @@ void OfnirDaemon::initHotkeys() {
 
     qApp->installNativeEventFilter(nativeFilter);
     connect(nativeFilter, &globalHotkeyFilter::hotkeyPressed, this, [this]() {
+            //m_captureWidget->initScreenCapture();
             m_captureWidget->show();
         }
     );
