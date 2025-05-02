@@ -93,7 +93,7 @@ std::string OCRManager::fetchOCRResponse(const std::string& imagePath) {
     json requestBody = {
     {"requests", {{
         {"image", {{"content", base64Image}}},
-        {"features", {{{"type", "DOCUMENT_TEXT_DETECTION"}}}}
+        {"features", {{{"type", "TEXT_DETECTION"}}}}
     }}}
     };
     std::string response;
