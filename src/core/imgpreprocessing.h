@@ -7,9 +7,10 @@ class ImgPreprocessing {
 public:
 	cv::Mat QPixmapToMat(const QPixmap& pixmap);
 	QImage MatToQImage(const cv::Mat& mat);
-	void preprocessImg(cv::Mat& img, float confidence);
+
+	void initPreprocessImg(cv::Mat& img);
+	bool preprocessImg(cv::Mat& img, float confidence);
 protected:
-	void highConfPreprocessing();
 	void medConfPreprocessing();
 	void lowConfPreprocessing();
 private:

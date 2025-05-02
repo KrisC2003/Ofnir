@@ -1,5 +1,3 @@
-
-// ocr_translate.hpp
 #pragma once
 
 #include <curl/curl.h>
@@ -9,27 +7,40 @@
 #include <windows.h>
 #include <locale>
 #include <codecvt>
-#include "opencv2/opencv.hpp"
 #include <fstream>
 #include <sstream>
 #include <map>
+#include "opencv2/opencv.hpp"
+#include "src/core/imgpreprocessing.h" 
 
 using json = nlohmann::json;
 
-// curl
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
+struct BlockData {
+	std::string text;
+	float confidence;
+	std::vector<cv::Point> boundingBox;
+};
 
-// utf8 to wide string
-std::wstring utf8ToWstring(const std::string& str);
+class OCRManager {
 
-// HTML entity decode
-std::string htmlEntityDecode(const std::string& input);
+public:
 
-// Google Translate API
-std::string translateText(const std::string& text, const std::string& targetLang);
+protected:
+	size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
+	std::wstring convertMultilangUTF8ToWstring(const std::string& str);
+	std::string htmlEntityDecode(const std::string& input);
+	std::string translateText(const std::string& text, const std::string& targetLang);
 
-// Read image file and encode to base64
-std::string encodeImageToBase64(const std::string& imagePath);
+	std::string encodeImageToBase64(const std::string& imagePath);
+	std::string fetchOCRResponse(const std::string& imagePath);
+	std::string processOCRWithConfidence(const std::string& imagePath, float  confidenceLevel);
+private:
+	ImgPreprocessing imgProcessor;
+	std::string apiKey = "AIzaSyBKGpGr6xCOaISgDGoe-Vy_VAXK2nBWc9I";  // API Key
 
-// Google Cloud Vision API OCR
-std::string performOCRWithGoogleVision(const std::string& imagePath, float  confidenceLevel);
+};
+
+
+
+
+
