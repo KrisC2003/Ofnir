@@ -47,7 +47,7 @@ bool ImgPreprocessing::preprocessImg(cv::Mat& img, float confidence) {
     m_targetImg = img;
     if (img.empty()) {
         std::cerr << "failed to load img" << std::endl;
-        return;
+        return true;
     }
     switch (categorizeConfidence(confidence)) {
         case ConfidenceTier::High:
@@ -65,7 +65,7 @@ bool ImgPreprocessing::preprocessImg(cv::Mat& img, float confidence) {
             break;
     }
 
-    return;
+    return false;
 }
 void ImgPreprocessing::medConfPreprocessing() {
 

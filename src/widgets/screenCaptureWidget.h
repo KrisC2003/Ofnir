@@ -15,11 +15,12 @@ class screenCaptureWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	screenCaptureWidget(QScreen* screen, QWidget* parent = nullptr);
+	screenCaptureWidget(QScreen* screen, const QString& savePath, QWidget* parent = nullptr);
 
 	~screenCaptureWidget() = default;
 
-public slots:
+signals:
+	void screenshotCaptured(const QString& filePath);
 
 protected:
 	void mousePressEvent(QMouseEvent* event) override;
@@ -34,7 +35,7 @@ private:
 	QScreen* m_screen;
 
 	QPixmap m_cachedPixmap;
-	QPixmap m_darkOverlay;
+	QString m_savePath;
 
 	// Mouse tracking
 	QPoint m_mousePressedPos;

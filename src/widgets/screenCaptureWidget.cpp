@@ -1,10 +1,12 @@
 #include "screenCaptureWidget.h"
-#include <QTimer>
-screenCaptureWidget::screenCaptureWidget(QScreen* screen, QWidget* parent)
+#include <QDateTime>
+#include <QDir>
+screenCaptureWidget::screenCaptureWidget(QScreen* screen, const QString& savePath, QWidget* parent)
 	: QWidget(parent)
 	, m_screen(screen)
 	, m_mouseIsPressed(false)
 	, m_overlayVisible(true)
+	, m_savePath(savePath)
 {
 	setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool | Qt::FramelessWindowHint);
 	setAttribute(Qt::WA_TranslucentBackground);
@@ -53,10 +55,15 @@ void screenCaptureWidget::mouseReleaseEvent(QMouseEvent* event)
 	m_selectionStartPos = QPoint();
 	m_selectionEndPos = QPoint();
 
+	QString filename = "screenshot_" + QDateTime::currentDateTime().toString("yyyy.MM.dd_HH-mm-ss") + ".png";
+
+	QDir dir(m_savePath); 
 	QPixmap capturedImg = m_cachedPixmap.copy(selectedArea);
-	capturedImg.save("screenshot.png", "PNG", 10);
+	capturedImg.save(dir.filePath(filename));
+
 	setCursor(Qt::ArrowCursor);
-	hide();
+	emit screenshotCaptured(m_savePath);
+	deleteLater();
 }
 
 void screenCaptureWidget::paintEvent(QPaintEvent* event)

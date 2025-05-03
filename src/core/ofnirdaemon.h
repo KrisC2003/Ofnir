@@ -16,14 +16,16 @@ class OfnirDaemon : public QObject
 public:
 	explicit OfnirDaemon(QObject* parent = nullptr);
 	virtual ~OfnirDaemon() = default;
+	QString m_historyFolderPath;
 protected:
 	bool changeHotkeys();
+	bool saveToHistory();
 	bool saveToClipboard();
 private:
 	void initTrayIcon();
 	void initHotkeys();
 
+	QScreen* m_screen;
 	globalHotkeyFilter* hotkeyFilter = nullptr;
-	screenCaptureWidget* m_captureWidget = nullptr;
 	TrayIcon* m_trayIcon = nullptr;
 };

@@ -26,10 +26,10 @@ class OCRManager {
 public:
 
 protected:
-	size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
 	std::wstring convertMultilangUTF8ToWstring(const std::string& str);
 	std::string htmlEntityDecode(const std::string& input);
 	std::string translateText(const std::string& text, const std::string& targetLang);
+	static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
 
 	std::string encodeImageToBase64(const std::string& imagePath);
 	std::string fetchOCRResponse(const std::string& imagePath);

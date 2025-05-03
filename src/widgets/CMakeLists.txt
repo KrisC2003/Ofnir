@@ -5,12 +5,14 @@ target_sources(${PROJECT_NAME} PRIVATE
 	infowindow.cpp
 	ocrtranslate.cpp
 	screencapturewidget.cpp
+	"../../features/translationoverlaywidget.cpp"
 	trayicon.cpp
 
 	infowindow.h
 	ocrtranslate.h
 	screencapturewidget.h
+	"../../features/translationoverlaywidget.h"
 	trayicon.h
 
 	infowindow.ui
- )
+)

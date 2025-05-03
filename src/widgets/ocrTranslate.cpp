@@ -127,6 +127,7 @@ std::string OCRManager::processOCRWithConfidence(const std::string& imagePath, f
     }
     imgProcessor.initPreprocessImg(img);
 
+    //test file
     cv::imwrite("processed.png", img);
 
     std::string resultText;
