@@ -1,21 +1,17 @@
 ﻿#include "QtWidgetsApplication1.h"
+#include "FontSettingsDialog.h"
 #include "ScreenshotOverlay.h"
 #include "OCRUtil.h"
-#include "FontSettingsDialog.h"
-#include "VisualComponents.h"
-#include "qhotkey.h"
+#include "VisualComponents.h"  
 #include <opencv2/opencv.hpp>
-#include <QClipboard>
-#include <QFontMetrics>
-#include <QGuiApplication>
-#include <QPropertyAnimation>
 #include <QPushButton>
-#include <QRegularExpression>
-#include <QScreen>
-#include <QTextDocument>
 #include <QVBoxLayout>
+#include <QPropertyAnimation>
+#include <QClipboard>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QFontMetrics>
 
-// Constructor: initialize dialog and hotkey
 QtWidgetsApplication1::QtWidgetsApplication1(QWidget* parent)
     : QDialog(parent), m_hotkey(nullptr)
 {
@@ -23,7 +19,8 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget* parent)
     QFont dummyFont;
     QColor dummyText, dummyOutline;
     QKeySequence loadedHotkey;
-    loadSettingsFromJson("user_settings.json", dummyFont, dummyText, dummyOutline, loadedHotkey);
+    QString language;
+    loadSettingsFromJson("user_settings.json", dummyFont, dummyText, dummyOutline, loadedHotkey, language);
 
     // Register hotkey
     m_hotkey = new QHotkey(loadedHotkey, true, this);
@@ -38,20 +35,22 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget* parent)
             QFont dummyFont;
             QColor dummyText, dummyOutline;
             QKeySequence newHotkey;
-            loadSettingsFromJson("user_settings.json", dummyFont, dummyText, dummyOutline, newHotkey);
+            QString dummyLanguage;
+            loadSettingsFromJson("user_settings.json", dummyFont, dummyText, dummyOutline, newHotkey, dummyLanguage);
             if (m_hotkey) m_hotkey->setRegistered(false);
             m_hotkey->setShortcut(newHotkey, true);
         }
         });
+
+    setWindowTitle("OCR Translator");
+    resize(200, 100);
 }
 
-// Destructor: unregister hotkey
 QtWidgetsApplication1::~QtWidgetsApplication1()
 {
     if (m_hotkey) m_hotkey->setRegistered(false);
 }
 
-// Handle screenshot, OCR, and popup
 void QtWidgetsApplication1::captureAndShowScreenshot()
 {
     ScreenshotOverlay* overlay = new ScreenshotOverlay();
@@ -63,21 +62,27 @@ void QtWidgetsApplication1::captureAndShowScreenshot()
             cv::threshold(img, img, 0, 255, cv::THRESH_BINARY + cv::THRESH_OTSU);
             cv::imwrite("processed.png", img);
 
+            QFont dummyFont;
+            QColor dummyText, dummyOutline;
+            QKeySequence dummyHotkey;
+            QString language;
+            loadSettingsFromJson("user_settings.json", dummyFont, dummyText, dummyOutline, dummyHotkey, language);
+
             std::string ocrResult = performOCRWithGoogleVision("processed.png", 0.9f);
-            std::wstring translatedText = utf8ToWstring(translateText(ocrResult, "en"));
+            std::wstring translatedText = utf8ToWstring(translateText(ocrResult, language.toStdString()));
             QString display = QString::fromStdWString(translatedText);
 
             createResultPopup(display, rect);
         });
 }
 
-// Create and position popup window
 QWidget* QtWidgetsApplication1::createResultPopup(const QString& text, const QRect& anchorRect)
 {
     QFont font;
     QColor textColor, outlineColor;
     QKeySequence dummy;
-    loadSettingsFromJson("user_settings.json", font, textColor, outlineColor, dummy);
+    QString dummyLang;
+    loadSettingsFromJson("user_settings.json", font, textColor, outlineColor, dummy, dummyLang);
 
     DraggablePopup* popup = new DraggablePopup();
     popup->setStyleSheet("background-color: rgba(255, 255, 255, 230); border: 2px solid black;");
@@ -88,14 +93,12 @@ QWidget* QtWidgetsApplication1::createResultPopup(const QString& text, const QRe
     QPushButton* closeButton = new QPushButton("\u274C", popup);
     closeButton->setStyleSheet("QPushButton { color: black; background-color: transparent; border: none; font-size: 16px; } QPushButton:hover { color: red; }");
     closeButton->setFixedSize(28, 28);
-    closeButton->setCursor(Qt::PointingHandCursor);
     connect(closeButton, &QPushButton::clicked, popup, &QWidget::close);
 
     QPushButton* copyButton = new QPushButton(QString::fromUtf8("\xF0\x9F\x93\x8B"), popup);
     copyButton->setToolTip("Copy to clipboard");
     copyButton->setStyleSheet("QPushButton { color: black; background-color: transparent; border: none; font-size: 16px; } QPushButton:hover { color: green; }");
     copyButton->setFixedSize(28, 28);
-    copyButton->setCursor(Qt::PointingHandCursor);
 
     QLabel* copiedLabel = new QLabel("Copied to clipboard", popup);
     copiedLabel->setStyleSheet("color: green; background: transparent; font-size: 12px;");

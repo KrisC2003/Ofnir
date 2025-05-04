@@ -59,7 +59,6 @@ std::string htmlEntityDecode(const std::string& input) {
     return output;
 }
 
-// Add line breaks
 std::string insertLineBreaks(const std::string& text, size_t maxLineLength) {
     std::string result;
     size_t count = 0;
@@ -72,6 +71,42 @@ std::string insertLineBreaks(const std::string& text, size_t maxLineLength) {
         }
     }
     return result;
+}
+
+
+std::string insertLineBreaksByWord(const std::string& text, size_t maxLineLength) {
+    std::istringstream iss(text);
+    std::string word, line, result;
+
+    while (iss >> word) {
+        if (line.length() + word.length() + 1 > maxLineLength) {
+            result += line + "\n";
+            line = word;
+        }
+        else {
+            if (!line.empty()) line += " ";
+            line += word;
+        }
+    }
+    if (!line.empty()) result += line;
+    return result;
+}
+
+
+std::string insertLineBreaksEveryN(const std::string& utf8Text, size_t maxChars) {
+    QString qstr = QString::fromUtf8(utf8Text.c_str());
+    QString result;
+    int count = 0;
+
+    for (int i = 0; i < qstr.length(); ++i) {
+        result += qstr[i];
+        count++;
+        if (count >= maxChars) {
+            result += '\n';
+            count = 0;
+        }
+    }
+    return result.toUtf8().constData();
 }
 
 // Google Translate
@@ -98,34 +133,18 @@ std::string translateText(const std::string& text, const std::string& targetLang
     try {
         auto jsonResponse = json::parse(response);
         std::string translated = htmlEntityDecode(jsonResponse["data"]["translations"][0]["translatedText"]);
-        return insertLineBreaks(translated, 40);
+
+        
+        if (targetLang == "zh-Hant" || targetLang == "zh-Hans" || targetLang == "ja") {
+            return insertLineBreaksEveryN(translated, 20);
+        }
+        else {
+            return insertLineBreaksByWord(translated, 40);
+        }
     }
     catch (...) {
         return "";
     }
-}
-
-// Image to base64
-std::string encodeImageToBase64(const std::string& imagePath) {
-    std::ifstream file(imagePath, std::ios::binary);
-    std::ostringstream oss;
-    oss << file.rdbuf();
-    std::string imageData = oss.str();
-
-    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    std::string encoded;
-    int val = 0, valb = -6;
-    for (uint8_t c : imageData) {
-        val = (val << 8) + c;
-        valb += 8;
-        while (valb >= 0) {
-            encoded.push_back(table[(val >> valb) & 0x3F]);
-            valb -= 6;
-        }
-    }
-    if (valb > -6) encoded.push_back(table[((val << 8) >> (valb + 8)) & 0x3F]);
-    while (encoded.size() % 4) encoded.push_back('=');
-    return encoded;
 }
 
 // Google Vision OCR
@@ -134,10 +153,10 @@ std::string performOCRWithGoogleVision(const std::string& imagePath, float confi
     std::string base64Image = encodeImageToBase64(imagePath);
 
     json requestBody = {
-        {"requests", {{
+        {"requests", { {
             {"image", {{"content", base64Image}}},
-            {"features", {{{"type", "TEXT_DETECTION"}}}}
-        }}}
+            {"features", { {{"type", "TEXT_DETECTION"}} }}
+        } }}
     };
 
     std::string response;
@@ -187,4 +206,27 @@ std::string performOCRWithGoogleVision(const std::string& imagePath, float confi
     }
 
     return resultText;
+}
+
+// Image to base64
+std::string encodeImageToBase64(const std::string& imagePath) {
+    std::ifstream file(imagePath, std::ios::binary);
+    std::ostringstream oss;
+    oss << file.rdbuf();
+    std::string imageData = oss.str();
+
+    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string encoded;
+    int val = 0, valb = -6;
+    for (uint8_t c : imageData) {
+        val = (val << 8) + c;
+        valb += 8;
+        while (valb >= 0) {
+            encoded.push_back(table[(val >> valb) & 0x3F]);
+            valb -= 6;
+        }
+    }
+    if (valb > -6) encoded.push_back(table[((val << 8) >> (valb + 8)) & 0x3F]);
+    while (encoded.size() % 4) encoded.push_back('=');
+    return encoded;
 }

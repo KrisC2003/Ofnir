@@ -21,6 +21,8 @@ std::string encodeImageToBase64(const std::string& imagePath);
 std::wstring utf8ToWstring(const std::string& str);
 std::string htmlEntityDecode(const std::string& input);
 std::string insertLineBreaks(const std::string& text, size_t maxLineLength = 40);
+std::string insertLineBreaksByWord(const std::string& text, size_t maxLineLength);
+std::string insertLineBreaksEveryN(const std::string& text, size_t maxChars);
 
 // CURL utils
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);

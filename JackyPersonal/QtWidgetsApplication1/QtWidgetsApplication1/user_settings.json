@@ -1,7 +1,8 @@
 {
     "FontFamily": "Arial",
-    "FontSize": 24,
+    "FontSize": 30,
     "Hotkey": "Alt+X",
     "OutlineColor": "#000000",
+    "OutputLanguage": "en",
     "TextColor": "#ffffff"
 }
