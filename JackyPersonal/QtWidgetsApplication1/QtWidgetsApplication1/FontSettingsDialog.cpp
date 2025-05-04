@@ -7,7 +7,6 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QFile>
-#include <QMessageBox>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
 
@@ -18,12 +17,21 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
 
     m_fontBox = new QFontComboBox(this);
     m_sizeBox = new QSpinBox(this);
-    m_sizeBox->setRange(6, 72);
+    m_sizeBox->setRange(6, 30);
     m_sizeBox->setValue(24);
 
     m_textColorBtn = new QPushButton("Select Text Color", this);
     m_outlineColorBtn = new QPushButton("Select Outline Color", this);
     m_hotkeyEdit = new QKeySequenceEdit(this);
+    m_languageBox = new QComboBox(this);
+
+    
+    m_languageBox->addItem(QString::fromUtf8(u8"English"), "en");
+    m_languageBox->addItem(QString::fromUtf8(u8"Chinese"), "zh-Hant");
+    m_languageBox->addItem(QString::fromUtf8(u8"Spanish"), "es");
+    m_languageBox->addItem(QString::fromUtf8(u8"French"), "fr");
+
+
 
     connect(m_textColorBtn, &QPushButton::clicked, this, &FontSettingsDialog::chooseTextColor);
     connect(m_outlineColorBtn, &QPushButton::clicked, this, &FontSettingsDialog::chooseOutlineColor);
@@ -44,6 +52,11 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
     hotkeyLayout->addWidget(new QLabel("Hotkey:"));
     hotkeyLayout->addWidget(m_hotkeyEdit);
     mainLayout->addLayout(hotkeyLayout);
+
+    QHBoxLayout* languageLayout = new QHBoxLayout();
+    languageLayout->addWidget(new QLabel("Output Language:"));
+    languageLayout->addWidget(m_languageBox);
+    mainLayout->addLayout(languageLayout);
 
     QLabel* hintLabel = new QLabel("Click the box above and press a new shortcut", this);
     hintLabel->setStyleSheet("color: gray; font-size: 10px;");
@@ -69,33 +82,37 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
 
         connect(fade, &QPropertyAnimation::finished, hotkeySavedLabel, [=]() {
             hotkeySavedLabel->setVisible(false);
-            hotkeySavedLabel->setGraphicsEffect(nullptr); // 移除效果，但不手動刪除
+            hotkeySavedLabel->setGraphicsEffect(nullptr);
             });
-
         });
 
     QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, &QDialogButtonBox::accepted, this, [=]() {
         QString filePath = "user_settings.json";
-        saveSettingsToJson(filePath, selectedFont(), textColor(), outlineColor(), selectedHotkey());
+        saveSettingsToJson(filePath, selectedFont(), textColor(), outlineColor(), selectedHotkey(), selectedLanguage());
         accept();
         });
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
     mainLayout->addWidget(buttonBox);
 
+    // Load settings
     QFont font;
     QColor textColor;
     QColor outlineColor;
     QKeySequence hotkey;
-    if (loadSettingsFromJson("user_settings.json", font, textColor, outlineColor, hotkey)) {
+    QString language;
+    if (loadSettingsFromJson("user_settings.json", font, textColor, outlineColor, hotkey, language)) {
         m_fontBox->setCurrentFont(font);
         m_sizeBox->setValue(font.pointSize());
         m_textColor = textColor;
         m_outlineColor = outlineColor;
         m_hotkeyEdit->setKeySequence(hotkey);
+
+        
+        int index = m_languageBox->findData(language);
+        if (index >= 0) m_languageBox->setCurrentIndex(index);
     }
 }
-
 
 void FontSettingsDialog::chooseTextColor()
 {
@@ -112,9 +129,6 @@ void FontSettingsDialog::chooseOutlineColor()
         m_outlineColor = color;
     }
 }
-
-
-
 
 QFont FontSettingsDialog::selectedFont() const
 {
@@ -138,7 +152,13 @@ QKeySequence FontSettingsDialog::selectedHotkey() const
     return m_hotkeyEdit->keySequence();
 }
 
-bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColor, QColor& outlineColor, QKeySequence& hotkey) {
+
+QString FontSettingsDialog::selectedLanguage() const
+{
+    return m_languageBox->currentData().toString();
+}
+
+bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColor, QColor& outlineColor, QKeySequence& hotkey, QString& language) {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly))
         return false;
@@ -151,22 +171,29 @@ bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColo
 
     QJsonObject json = doc.object();
     font.setFamily(json["FontFamily"].toString("Arial"));
-    font.setPointSize(json["FontSize"].toInt(24));
+
+    //max 30 even user change json
+    int loadedSize = json["FontSize"].toInt(24);
+    if (loadedSize > 30) loadedSize = 30;
+    font.setPointSize(loadedSize);
+
     textColor = QColor(json["TextColor"].toString("#ffffff"));
     outlineColor = QColor(json["OutlineColor"].toString("#000000"));
     hotkey = QKeySequence(json["Hotkey"].toString("Alt+X"));
+    language = json["OutputLanguage"].toString("en");
 
     return true;
 }
 
 
-bool saveSettingsToJson(const QString& filePath, const QFont& font, const QColor& textColor, const QColor& outlineColor, const QKeySequence& hotkey) {
+bool saveSettingsToJson(const QString& filePath, const QFont& font, const QColor& textColor, const QColor& outlineColor, const QKeySequence& hotkey, const QString& language) {
     QJsonObject json;
     json["FontFamily"] = font.family();
     json["FontSize"] = font.pointSize();
     json["TextColor"] = textColor.name();
     json["OutlineColor"] = outlineColor.name();
     json["Hotkey"] = hotkey.toString();
+    json["OutputLanguage"] = language;
 
     QFile file(filePath);
     if (file.open(QIODevice::WriteOnly)) {

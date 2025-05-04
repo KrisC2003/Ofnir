@@ -9,6 +9,7 @@
 #include <QKeySequenceEdit>
 #include <QDialogButtonBox>
 #include <QSettings>
+#include <QComboBox>  
 
 class FontSettingsDialog : public QDialog
 {
@@ -21,11 +22,11 @@ public:
     QColor textColor() const;
     QColor outlineColor() const;
     QKeySequence selectedHotkey() const;
+    QString selectedLanguage() const; 
 
 private slots:
     void chooseTextColor();
     void chooseOutlineColor();
-    
 
 private:
     QFontComboBox* m_fontBox;
@@ -33,11 +34,12 @@ private:
     QPushButton* m_textColorBtn;
     QPushButton* m_outlineColorBtn;
     QKeySequenceEdit* m_hotkeyEdit;
+    QComboBox* m_languageBox; 
 
     QColor m_textColor;
     QColor m_outlineColor;
 };
 
 // Utility
-bool saveSettingsToJson(const QString& filePath, const QFont& font, const QColor& textColor, const QColor& outlineColor, const QKeySequence& hotkey);
-bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColor, QColor& outlineColor, QKeySequence& hotkey);
+bool saveSettingsToJson(const QString& filePath, const QFont& font, const QColor& textColor, const QColor& outlineColor, const QKeySequence& hotkey, const QString& language);
+bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColor, QColor& outlineColor, QKeySequence& hotkey, QString& language);
