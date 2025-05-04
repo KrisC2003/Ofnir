@@ -1,8 +1,11 @@
 #pragma once
 #include <QApplication>
 #include <QObject>
+#include <QDir>
+#include <QStandardPaths>
 #include "src/widgets/trayicon.h"
 #include "src/widgets/screencapturewidget.h"
+#include "ocrmanager.h"
 
 class globalHotkeyFilter;
 class screenCaptureWidget;
@@ -25,7 +28,12 @@ private:
 	void initTrayIcon();
 	void initHotkeys();
 
+	OCRManager m_ocrManager;
+
 	QScreen* m_screen;
 	globalHotkeyFilter* hotkeyFilter = nullptr;
 	TrayIcon* m_trayIcon = nullptr;
+
+private slots:
+	void handleScreenshotCaptured(const QString& imagePath);
 };

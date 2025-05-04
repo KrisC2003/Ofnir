@@ -1,6 +1,5 @@
 #include "screenCaptureWidget.h"
-#include <QDateTime>
-#include <QDir>
+
 screenCaptureWidget::screenCaptureWidget(QScreen* screen, const QString& savePath, QWidget* parent)
 	: QWidget(parent)
 	, m_screen(screen)
@@ -55,14 +54,16 @@ void screenCaptureWidget::mouseReleaseEvent(QMouseEvent* event)
 	m_selectionStartPos = QPoint();
 	m_selectionEndPos = QPoint();
 
-	QString filename = "screenshot_" + QDateTime::currentDateTime().toString("yyyy.MM.dd_HH-mm-ss") + ".png";
+	QString filename = "screenshot_" + QDateTime::currentDateTime().toString("yyyy.MM.dd_HH:mm:ss") + ".png";
 
-	QDir dir(m_savePath); 
+	QDir dir(m_savePath);
+	QString fullPath = dir.filePath(filename);
+
 	QPixmap capturedImg = m_cachedPixmap.copy(selectedArea);
-	capturedImg.save(dir.filePath(filename));
+	capturedImg.save(fullPath);
 
 	setCursor(Qt::ArrowCursor);
-	emit screenshotCaptured(m_savePath);
+	emit screenshotCaptured(fullPath);
 	deleteLater();
 }
 

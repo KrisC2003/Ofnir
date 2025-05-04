@@ -6,6 +6,8 @@
 #include <QPixmap>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QDateTime>
+#include <QDir>
 
 class QMouseEvent;
 class QPaintEvent;
@@ -16,12 +18,7 @@ class screenCaptureWidget : public QWidget
 	Q_OBJECT
 public:
 	screenCaptureWidget(QScreen* screen, const QString& savePath, QWidget* parent = nullptr);
-
 	~screenCaptureWidget() = default;
-
-signals:
-	void screenshotCaptured(const QString& filePath);
-
 protected:
 	void mousePressEvent(QMouseEvent* event) override;
 	void mouseMoveEvent(QMouseEvent* event) override;
@@ -44,5 +41,7 @@ private:
 
 	bool m_mouseIsPressed;
 	bool m_overlayVisible;
+signals:
+	void screenshotCaptured(const QString& filePath);
 };
 

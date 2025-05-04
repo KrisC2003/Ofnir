@@ -34,17 +34,16 @@ QImage ImgPreprocessing::MatToQImage(const cv::Mat& mat)
 }
 
 // initial preprocessing
+// TODO: inital preprocess is too harsh on slightly blurry images etc.
 void ImgPreprocessing::initPreprocessImg(cv::Mat& img) {
-    m_targetImg = img;
-    cv::cvtColor(m_targetImg, m_targetImg, cv::COLOR_BGR2GRAY);
-    cv::threshold(m_targetImg, m_targetImg, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+    cv::threshold(img, img, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 }
 
 // TODO: make it a regular preprocessing tree based on confidence results, ideally modular REFERENCE features/preprocessing
 // TODO: create a check for settings to apply different filters based on language
 // returns true if retry is necessary, false otherwise
 bool ImgPreprocessing::preprocessImg(cv::Mat& img, float confidence) {
-    m_targetImg = img;
     if (img.empty()) {
         std::cerr << "failed to load img" << std::endl;
         return true;

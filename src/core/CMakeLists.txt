@@ -2,9 +2,11 @@
 # add_subdirectory if nesting another folder into core
 
 target_sources(${PROJECT_NAME} PRIVATE 
-	imgpreprocessing.cpp
 	ofnirdaemon.cpp
+	imgpreprocessing.cpp
+	ocrmanager.cpp
 
-	imgpreprocessing.h
 	ofnirdaemon.h
+	imgpreprocessing.h
+	ocrmanager.h
 )

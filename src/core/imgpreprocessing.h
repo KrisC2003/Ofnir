@@ -14,6 +14,5 @@ protected:
 	void medConfPreprocessing();
 	void lowConfPreprocessing();
 private:
-	cv::Mat m_targetImg;
 	
 };
