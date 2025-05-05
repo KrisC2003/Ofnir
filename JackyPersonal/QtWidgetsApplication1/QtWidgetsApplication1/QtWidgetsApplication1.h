@@ -1,18 +1,10 @@
-// QtWidgetsApplication1.h
 #pragma once
 #include "qhotkey.h"
 #include <QDialog>
-#include <QFont>
-#include <QColor>
-#include <QKeySequence>
-#include <QTextEdit>
-#include <QShortcut>
+#include <QTableWidget>
 #include <QPushButton>
-#include "ui_QtWidgetsApplication1.h"
 
-class QtWidgetsApplication1 : public QDialog
-
-{
+class QtWidgetsApplication1 : public QDialog {
     Q_OBJECT
 
 public:
@@ -21,12 +13,12 @@ public:
 
 private slots:
     void captureAndShowScreenshot();
+    void showHistoryDialog(); 
 
 private:
     QWidget* createResultPopup(const QString& text, const QRect& anchorRect);
 
-private:
-    Ui::QtWidgetsApplication1Class ui;
-    QTextEdit* textOutput;
     QHotkey* m_hotkey = nullptr;
+    QDialog* m_historyDialog = nullptr;      
+    QTableWidget* m_historyTable = nullptr;  
 };

@@ -38,6 +38,8 @@ private:
 
     QColor m_textColor;
     QColor m_outlineColor;
+    QKeySequence m_originalHotkey;
+    bool m_isInitializing = false;
 };
 
 // Utility
