@@ -40,12 +40,15 @@ template <> constexpr inline auto QtWidgetsApplication1::qt_create_metaobjectdat
     QtMocHelpers::StringRefStorage qt_stringData {
         "QtWidgetsApplication1",
         "captureAndShowScreenshot",
-        ""
+        "",
+        "showHistoryDialog"
     };
 
     QtMocHelpers::UintData qt_methods {
         // Slot 'captureAndShowScreenshot'
         QtMocHelpers::SlotData<void()>(1, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'showHistoryDialog'
+        QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -70,6 +73,7 @@ void QtWidgetsApplication1::qt_static_metacall(QObject *_o, QMetaObject::Call _c
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->captureAndShowScreenshot(); break;
+        case 1: _t->showHistoryDialog(); break;
         default: ;
         }
     }
@@ -95,14 +99,14 @@ int QtWidgetsApplication1::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 1)
+        if (_id < 2)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 2;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 1)
+        if (_id < 2)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 1;
+        _id -= 2;
     }
     return _id;
 }

@@ -11,7 +11,7 @@
 #include <QPropertyAnimation>
 
 FontSettingsDialog::FontSettingsDialog(QWidget* parent)
-    : QDialog(parent)
+    : QDialog(parent), m_isInitializing(false)  
 {
     setWindowTitle("Settings");
 
@@ -25,13 +25,10 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
     m_hotkeyEdit = new QKeySequenceEdit(this);
     m_languageBox = new QComboBox(this);
 
-    
     m_languageBox->addItem(QString::fromUtf8(u8"English"), "en");
     m_languageBox->addItem(QString::fromUtf8(u8"Chinese"), "zh-Hant");
     m_languageBox->addItem(QString::fromUtf8(u8"Spanish"), "es");
     m_languageBox->addItem(QString::fromUtf8(u8"French"), "fr");
-
-
 
     connect(m_textColorBtn, &QPushButton::clicked, this, &FontSettingsDialog::chooseTextColor);
     connect(m_outlineColorBtn, &QPushButton::clicked, this, &FontSettingsDialog::chooseOutlineColor);
@@ -53,11 +50,6 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
     hotkeyLayout->addWidget(m_hotkeyEdit);
     mainLayout->addLayout(hotkeyLayout);
 
-    QHBoxLayout* languageLayout = new QHBoxLayout();
-    languageLayout->addWidget(new QLabel("Output Language:"));
-    languageLayout->addWidget(m_languageBox);
-    mainLayout->addLayout(languageLayout);
-
     QLabel* hintLabel = new QLabel("Click the box above and press a new shortcut", this);
     hintLabel->setStyleSheet("color: gray; font-size: 10px;");
     mainLayout->addWidget(hintLabel);
@@ -68,7 +60,24 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
     hotkeySavedLabel->setVisible(false);
     mainLayout->addWidget(hotkeySavedLabel);
 
-    connect(m_hotkeyEdit, &QKeySequenceEdit::editingFinished, this, [=]() {
+    QHBoxLayout* languageLayout = new QHBoxLayout();
+    languageLayout->addWidget(new QLabel("Output Language:"));
+    languageLayout->addWidget(m_languageBox);
+    mainLayout->addLayout(languageLayout);
+
+    
+
+    // -- Connect keySequenceChanged with ESC & save label
+    connect(m_hotkeyEdit, &QKeySequenceEdit::keySequenceChanged, this, [=](const QKeySequence& sequence) {
+        if (m_isInitializing)
+            return;
+
+        if (sequence == QKeySequence(Qt::Key_Escape)) {
+            m_hotkeyEdit->setKeySequence(m_originalHotkey);  // origin hotkey if esc pressed
+            m_hotkeyEdit->clearFocus();
+            return;
+        }
+
         hotkeySavedLabel->setVisible(true);
 
         auto* effect = new QGraphicsOpacityEffect(hotkeySavedLabel);
@@ -101,6 +110,8 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
     QColor outlineColor;
     QKeySequence hotkey;
     QString language;
+
+    m_isInitializing = true;  
     if (loadSettingsFromJson("user_settings.json", font, textColor, outlineColor, hotkey, language)) {
         m_fontBox->setCurrentFont(font);
         m_sizeBox->setValue(font.pointSize());
@@ -108,10 +119,12 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
         m_outlineColor = outlineColor;
         m_hotkeyEdit->setKeySequence(hotkey);
 
-        
+        m_originalHotkey = hotkey;  
+
         int index = m_languageBox->findData(language);
         if (index >= 0) m_languageBox->setCurrentIndex(index);
     }
+    m_isInitializing = false; 
 }
 
 void FontSettingsDialog::chooseTextColor()
@@ -152,7 +165,6 @@ QKeySequence FontSettingsDialog::selectedHotkey() const
     return m_hotkeyEdit->keySequence();
 }
 
-
 QString FontSettingsDialog::selectedLanguage() const
 {
     return m_languageBox->currentData().toString();
@@ -170,9 +182,13 @@ bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColo
     if (!doc.isObject()) return false;
 
     QJsonObject json = doc.object();
-    font.setFamily(json["FontFamily"].toString("Arial"));
+    QString loadedFamily = json["FontFamily"].toString("Arial");
+    if (!QFontDatabase().families().contains(loadedFamily)) {
+        loadedFamily = "Arial";  // fallback
+    }
+    font.setFamily(loadedFamily);
 
-    //max 30 even user change json
+    // max 30 even user change json
     int loadedSize = json["FontSize"].toInt(24);
     if (loadedSize > 30) loadedSize = 30;
     font.setPointSize(loadedSize);
@@ -184,7 +200,6 @@ bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColo
 
     return true;
 }
-
 
 bool saveSettingsToJson(const QString& filePath, const QFont& font, const QColor& textColor, const QColor& outlineColor, const QKeySequence& hotkey, const QString& language) {
     QJsonObject json;
