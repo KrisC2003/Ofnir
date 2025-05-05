@@ -11,7 +11,7 @@
 #include <QPropertyAnimation>
 
 FontSettingsDialog::FontSettingsDialog(QWidget* parent)
-    : QDialog(parent), m_isInitializing(false)  
+    : QDialog(parent), m_isInitializing(false)
 {
     setWindowTitle("Settings");
 
@@ -65,7 +65,18 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
     languageLayout->addWidget(m_languageBox);
     mainLayout->addLayout(languageLayout);
 
-    
+
+    auto* effect = new QGraphicsOpacityEffect(hotkeySavedLabel);
+    hotkeySavedLabel->setGraphicsEffect(effect);
+
+    auto* fade = new QPropertyAnimation(effect, "opacity", hotkeySavedLabel);
+    fade->setDuration(5000);
+    fade->setStartValue(1.0);
+    fade->setEndValue(0.0);
+
+    connect(fade, &QPropertyAnimation::finished, this, [=]() {
+        hotkeySavedLabel->setVisible(false);
+        });
 
     // -- Connect keySequenceChanged with ESC & save label
     connect(m_hotkeyEdit, &QKeySequenceEdit::keySequenceChanged, this, [=](const QKeySequence& sequence) {
@@ -73,26 +84,15 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
             return;
 
         if (sequence == QKeySequence(Qt::Key_Escape)) {
-            m_hotkeyEdit->setKeySequence(m_originalHotkey);  // origin hotkey if esc pressed
+            m_hotkeyEdit->setKeySequence(m_originalHotkey);  // restore original
             m_hotkeyEdit->clearFocus();
             return;
         }
 
         hotkeySavedLabel->setVisible(true);
-
-        auto* effect = new QGraphicsOpacityEffect(hotkeySavedLabel);
-        hotkeySavedLabel->setGraphicsEffect(effect);
-
-        QPropertyAnimation* fade = new QPropertyAnimation(effect, "opacity");
-        fade->setDuration(5000);
-        fade->setStartValue(1.0);
-        fade->setEndValue(0.0);
-        fade->start(QAbstractAnimation::DeleteWhenStopped);
-
-        connect(fade, &QPropertyAnimation::finished, hotkeySavedLabel, [=]() {
-            hotkeySavedLabel->setVisible(false);
-            hotkeySavedLabel->setGraphicsEffect(nullptr);
-            });
+        fade->stop();          // reset animation
+        effect->setOpacity(1); // reset opacity
+        fade->start();         // start animation
         });
 
     QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -111,7 +111,7 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
     QKeySequence hotkey;
     QString language;
 
-    m_isInitializing = true;  
+    m_isInitializing = true;
     if (loadSettingsFromJson("user_settings.json", font, textColor, outlineColor, hotkey, language)) {
         m_fontBox->setCurrentFont(font);
         m_sizeBox->setValue(font.pointSize());
@@ -119,12 +119,12 @@ FontSettingsDialog::FontSettingsDialog(QWidget* parent)
         m_outlineColor = outlineColor;
         m_hotkeyEdit->setKeySequence(hotkey);
 
-        m_originalHotkey = hotkey;  
+        m_originalHotkey = hotkey;
 
         int index = m_languageBox->findData(language);
         if (index >= 0) m_languageBox->setCurrentIndex(index);
     }
-    m_isInitializing = false; 
+    m_isInitializing = false;
 }
 
 void FontSettingsDialog::chooseTextColor()
@@ -187,7 +187,6 @@ bool loadSettingsFromJson(const QString& filePath, QFont& font, QColor& textColo
         loadedFamily = "Arial";  // fallback
     }
     font.setFamily(loadedFamily);
-
     // max 30 even user change json
     int loadedSize = json["FontSize"].toInt(24);
     if (loadedSize > 30) loadedSize = 30;

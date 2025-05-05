@@ -66,7 +66,7 @@ QtWidgetsApplication1::QtWidgetsApplication1(QWidget* parent)
     historyBtn->setGeometry(120, 10, 100, 30);
     connect(historyBtn, &QPushButton::clicked, this, &QtWidgetsApplication1::showHistoryDialog);
 
-    setWindowTitle("OCR Translator");
+    setWindowTitle("Ofnir");
     resize(250, 100);
 }
 
