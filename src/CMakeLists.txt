@@ -5,12 +5,12 @@
 #find_package(Tesseract REQUIRED)
 
 list(APPEND CMAKE_PREFIX_PATH "C:/Libraries/Qt/6.9.0/msvc2022_64")
-find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Network REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(curl REQUIRED)
+#find_package(curl REQUIRED)
 find_package(opencv REQUIRED)
 
 
@@ -45,10 +45,10 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC
     #${Tesseract_LIBRARIES}
     ${OpenCV_LIBS}
+    Qt6::Network
     Qt6::Widgets
     Qt6::Core
     Qt6::Gui
-    CURL::libcurl
 )
 
 # Testing build

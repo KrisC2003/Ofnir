@@ -1,54 +1,72 @@
 // ocr_translate.cpp
 #include "ocrmanager.h"
 
-OCRManager::OCRManager() {
-
+OCRManager::OCRManager(QObject* parent) : QObject(parent) {
+    networkManager = new QNetworkAccessManager(this);
+    netInfo = QNetworkInformation::instance();
 }
 
 // retries until maxRetries or confidence level is met
 // TODO: future remake for compatibility with languages other than <select language> -> english
-std::string OCRManager::processOCRWithConfidence(const std::string& imagePath) {
+QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
     cv::Mat img = loadImage(imagePath);
-
     imgProcessor.initPreprocessImg(img);
-    cv::Mat resultFiltered = img.clone();
 
     //test file
+    cv::Mat resultFiltered = img.clone();
     cv::imwrite("processed_img.png", resultFiltered);
 
 
+    QString response = fetchOCRResponse(imagePath);
     int maxRetries = 2;
     int retryCount = 0;
+    QString resultText;
 
-    std::string response = fetchOCRResponse(imagePath);
-    std::string resultText;
     while (retryCount < maxRetries) {
-        bool retry = false;
         try {
-            auto jsonResponse = json::parse(response);
-            const auto& responses = jsonResponse["responses"];
-            if (responses.empty() || !responses[0].contains("fullTextAnnotation")) {
-                std::cerr << "No text detected.\n";
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(response.toUtf8());
+            QJsonObject jsonResponse = jsonDoc.object();
+            QJsonArray responses = jsonResponse["responses"].toArray();
+
+            if (responses.isEmpty() || !responses[0].toObject().contains("fullTextAnnotation")) {
+                qWarning() << "No text detected.";
                 return "No text detected";
             }
-            const auto& annotation = responses[0]["fullTextAnnotation"];
-            if (annotation["text"].get<std::string>().empty()) {
-                std::cerr << "Empty text field in annotation.\n";
+
+            QJsonObject annotation = responses[0].toObject()["fullTextAnnotation"].toObject();
+            QString text = annotation["text"].toString();
+            if (text.isEmpty()) {
+                qWarning() << "Empty text field in annotation.\n";
                 return "No text detected";
             }
-            auto pages = annotation["pages"];
+            QJsonArray pages = annotation["pages"].toArray();;
             float lowestBlockConfidence = 1.0f;
-            for (const auto& page : pages) {
-                for (const auto& block : page["blocks"]) {
-                    float blockConfidence = block.value("confidence", 1.0f);
+            for (const QJsonValue& pageVal : pages) {
+                QJsonObject page = pageVal.toObject();
+                QJsonArray blocks = page["blocks"].toArray();
+
+                for (const QJsonValue& blockVal : blocks) {
+                    QJsonObject block = blockVal.toObject();
+                    float blockConfidence = block.value("confidence").toDouble(1.0f);
+
                     if (blockConfidence < lowestBlockConfidence) {
                         lowestBlockConfidence = blockConfidence;
                     }
-                    for (const auto& paragraph : block["paragraphs"]) {
-                        for (const auto& word : paragraph["words"]) {
-                            std::string wordText;
-                            for (const auto& symbol : word["symbols"]) {
-                                wordText += symbol["text"].get<std::string>();
+
+                    QJsonArray paragraphs = block["paragraphs"].toArray();
+                    for (const QJsonValue& paragraphVal : paragraphs) {
+                        QJsonObject paragraph = paragraphVal.toObject();
+                        QJsonArray words = paragraph["words"].toArray();
+
+                        for (const QJsonValue& wordVal : words) {
+                            QJsonObject word = wordVal.toObject();
+                            QJsonArray symbols = word["symbols"].toArray();
+
+                            QString wordText;
+
+                            for (const QJsonValue& symbolVal : symbols) {
+                                QJsonObject symbol = symbolVal.toObject();
+                                wordText += symbol["text"].toString();
                             }
                             resultText += wordText + " ";
 
@@ -57,14 +75,18 @@ std::string OCRManager::processOCRWithConfidence(const std::string& imagePath) {
                     }
                 }
             }
-            retry = imgProcessor.preprocessImg(img, lowestBlockConfidence);
+            bool retry = imgProcessor.preprocessImg(img, lowestBlockConfidence);
+
+            if (!retry) {
+                break;
+            }
         }
-        catch (const json::exception& e) {
-            std::cerr << "Error parsing JSON response: " << e.what() << std::endl;
+        catch (const QJsonParseError& e) {
+            qWarning() << "Error parsing JSON response: " << e.errorString();
             return "JSON Parsing Error";
         }
         catch (const std::exception& e) {
-            std::cerr << "Error during OCR processing: " << e.what() << std::endl;
+            qWarning() << "Error during OCR processing: " << e.what();
             return "OCR Processing Error";
         }
         catch (...) {
@@ -74,45 +96,60 @@ std::string OCRManager::processOCRWithConfidence(const std::string& imagePath) {
         retryCount++;
     }
     if (retryCount == maxRetries) {
-        std::cerr << "Max retries reached\n" << std::endl;
+        qWarning() << "Max retries reached";
     }
     return resultText;
 }
 
 // translates text 
-std::string OCRManager::translateText(const std::string& text, const std::string& targetLang) {
-    std::string apiKey = "AIzaSyBKGpGr6xCOaISgDGoe-Vy_VAXK2nBWc9I";  // API Key
-    CURL* curl;
-    std::string response;
+QString OCRManager::translateText(const QString& text, const QString& targetLang) {
+    QString response;
 
-    curl = curl_easy_init();
-    if (curl) {
-        char* encodedText = curl_easy_escape(curl, text.c_str(), 0);
-        if (!encodedText) return "";
+    QNetworkRequest request;
+    QString url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
+        "&q=" + QUrl::toPercentEncoding(text) + "&target=" + targetLang;
 
-        std::string url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
-            "&q=" + encodedText + "&target=" + targetLang;
+    request.setUrl(QUrl(url));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-        curl_easy_perform(curl);
-        curl_free(encodedText);
-        curl_easy_cleanup(curl);
+    QEventLoop eventLoop;
+    connect(networkManager, &QNetworkAccessManager::finished, &eventLoop, &QEventLoop::quit);
+
+    networkManager->get(request);
+
+    //prevents infinite hang due to network issues 
+    // TODO: pass to error handler to give message in this scenario
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &eventLoop, &QEventLoop::quit);
+    timer.start(5000);
+
+    eventLoop.exec();
+
+    QString translatedText;
+    if (checkNetworkStatus()) {
+        QByteArray responseData = networkManager->get(request)->readAll();
+        QJsonDocument jsonResponse = QJsonDocument::fromJson(responseData);
+        if (!jsonResponse.isNull()) {
+            QJsonObject responseObject = jsonResponse.object();
+            if (responseObject.contains("data")) {
+                QJsonObject data = responseObject["data"].toObject();
+                if (data.contains("translations")) {
+                    QJsonArray translations = data["translations"].toArray();
+                    if (!translations.isEmpty()) {
+                        QJsonObject translation = translations[0].toObject();
+                        translatedText = translation["translatedText"].toString();
+                    }
+                }
+            }
+        }
     }
-
-    try {
-        auto jsonResponse = json::parse(response);
-        return jsonResponse["data"]["translations"][0]["translatedText"];
-        //return htmlEntityDecode(jsonResponse["data"]["translations"][0]["translatedText"]);
-    }
-    catch (...) {
-        return "";
-    }
+    return translatedText;
 }
 
-cv::Mat OCRManager::loadImage(const std::string& imagePath) {
-    cv::Mat img = cv::imread(imagePath);
+cv::Mat OCRManager::loadImage(const QString& imagePath) {
+    std::string stringPath = imagePath.toStdString();
+    cv::Mat img = cv::imread(stringPath);
     if (img.empty()) {
         throw std::runtime_error("Cannot read the image.");
     }
@@ -120,52 +157,33 @@ cv::Mat OCRManager::loadImage(const std::string& imagePath) {
 }
 
 // converts non-ASCII special characters for display
-std::wstring OCRManager::convertMultilangUTF8ToWstring(const std::string& str) {
-    // checks for size needed before converting and returning the wstring
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.length(), nullptr, 0);
-    std::wstring wstr(size_needed, 0);
-    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.length(), &wstr[0], size_needed);
+std::wstring OCRManager::convertMultilangUTF8ToWstring(const QString& qstr) {
+    std::wstring wstr = qstr.toStdWString();
     return wstr;
 }
 
 // converts htmlEntities to be more readable characters (for future use as google vision doesnt return htmlEntities)
-std::string OCRManager::htmlEntityDecode(const std::string& input) {
-    std::map<std::string, char> html_entities = {
+QString OCRManager::htmlEntityDecode(const QString& input) {
+    QHash<QString, QChar> html_entities = {
         {"&quot;", '\"'}, {"&apos;", '\''}, {"&amp;", '&'},
         {"&lt;", '<'}, {"&gt;", '>'}, {"&#39;", '\''}
     };
 
-    std::string output = input;
-    for (const auto& pair : html_entities) {
-        size_t pos = 0;
-        while ((pos = output.find(pair.first, pos)) != std::string::npos) {
-            output.replace(pos, pair.first.length(), std::string(1, pair.second));
-            pos += 1;
-        }
+    QString output = input;
+    for (const auto& entity : html_entities) {
+        output.replace(entity, html_entities[entity]);
     }
     return output;
 }
 
-std::string OCRManager::encodeImageToBase64(const std::string& imagePath) {
-    std::ifstream file(imagePath, std::ios::binary);
-    std::ostringstream oss;
-    oss << file.rdbuf();
-    std::string imageData = oss.str();
-
-    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    std::string encoded;
-    int val = 0, valb = -6;
-    for (uint8_t c : imageData) {
-        val = (val << 8) + c;
-        valb += 8;
-        while (valb >= 0) {
-            encoded.push_back(table[(val >> valb) & 0x3F]);
-            valb -= 6;
-        }
+QString OCRManager::encodeImageToBase64(const QString& imagePath) {
+    QFile file(imagePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open image:" << imagePath;
+        return QString();
     }
-    if (valb > -6) encoded.push_back(table[((val << 8) >> (valb + 8)) & 0x3F]);
-    while (encoded.size() % 4) encoded.push_back('=');
-    return encoded;
+    QByteArray imageData = file.readAll();
+    return imageData.toBase64();
 }
 
 size_t OCRManager::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
@@ -173,32 +191,72 @@ size_t OCRManager::WriteCallback(void* contents, size_t size, size_t nmemb, void
     return size * nmemb;
 }
 
-std::string OCRManager::fetchOCRResponse(const std::string& imagePath) {
-    std::string base64Image = encodeImageToBase64(imagePath);
-    json requestBody = {
-    {"requests", {{
-        {"image", {{"content", base64Image}}},
-        {"features", {{{"type", "TEXT_DETECTION"}}}}
-    }}}
+QString OCRManager::fetchOCRResponse(const QString& imagePath) {
+    QString base64Image = encodeImageToBase64(imagePath);
+
+    QJsonObject requestBody = {
+        { "requests", QJsonArray{
+            QJsonObject{
+                { "image", QJsonObject{
+                    { "content", base64Image }
+                }},
+                { "features", QJsonArray{
+                    QJsonObject{ { "type", "TEXT_DETECTION" } }
+                }}
+            }
+        }}
     };
-    std::string response;
+
+    QByteArray response;
+
     CURL* curl = curl_easy_init();
     if (curl) {
-        std::string url = "https://vision.googleapis.com/v1/images:annotate?key=" + apiKey;
-        std::string requestData = requestBody.dump();
+        QString url = QString("https://vision.googleapis.com/v1/images:annotate?key=%1").arg(apiKey);
+
+        QJsonDocument doc(requestBody);
+        QByteArray requestData = doc.toJson();
 
         struct curl_slist* headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
 
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestData.c_str());
+        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestData.constData());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
-        curl_easy_perform(curl);
+        CURLcode res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            qWarning() << "curl_easy_perform() failed: " << curl_easy_strerror(res);
+        }
+        curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
     }
-    return response;
+    return QString::fromUtf8(response);
 }
 
+bool OCRManager::checkNetworkStatus() {
+    QNetworkInformation::Reachability status = netInfo->reachability();
+
+    switch (status) {
+    case QNetworkInformation::Reachability::Online:
+        qDebug() << "Network is online.";
+        return true;
+    case QNetworkInformation::Reachability::Site:
+        qDebug() << "Can reach specific sites.";
+        return true;
+    case QNetworkInformation::Reachability::Local:
+        qDebug() << "Connected locally only.";
+        return false;
+    case QNetworkInformation::Reachability::Disconnected:
+        qDebug() << "No network connection.";
+        return false;
+    default:
+        qDebug() << "Unknown network status.";
+        return false;
+    }
+}
+
+bool OCRManager::isCJLanguage(const QString& language) {
+    return language == "zh" || language == "ja";
+}

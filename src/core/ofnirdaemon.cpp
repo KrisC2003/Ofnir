@@ -48,6 +48,5 @@ bool OfnirDaemon::saveToHistory() {
 }
 
 void OfnirDaemon::handleScreenshotCaptured(const QString& imagePath) {
-    std::string stringPath = imagePath.toStdString();
-    m_ocrManager.processOCRWithConfidence(stringPath);
+    m_ocrManager.processOCRWithConfidence(imagePath);
 }
