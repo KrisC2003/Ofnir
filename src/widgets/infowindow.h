@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QDialog>
+#include <QColor>
+#include <QPoint>
 
 
 namespace Ui {
@@ -30,6 +32,8 @@ class InfoWindow : public QDialog
 
 
     private:
+        void saveSettings();       
+        void loadSettings();
         QColor m_currentColor;  // Add this line to track the selected background color
         QFont m_currentFont;
         QColor m_fontColor;
@@ -40,3 +44,4 @@ class InfoWindow : public QDialog
         bool m_dragging = false;  // Added this line
         int m_dragAreaHeight = 30;  // Define the draggable area height
 };
+

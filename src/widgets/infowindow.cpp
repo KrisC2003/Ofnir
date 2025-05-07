@@ -7,12 +7,18 @@
 #include <QColorDialog>
 #include <QPalette>
 #include <QFontDialog>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QFile>
+#include <QStandardPaths>
+#include <QMessageBox>
 
 #define HOTKEY_ID 1001
 
 InfoWindow::InfoWindow(QDialog* parent)
     : QDialog(parent), ui(new Ui::InfoWindow)
 {
+
     ui->setupUi(this);
     setWindowFlags(Qt::FramelessWindowHint);
     //connects ui buttons to functions
@@ -20,9 +26,12 @@ InfoWindow::InfoWindow(QDialog* parent)
     connect(ui->colorButton, &QPushButton::clicked, this, &InfoWindow::changeBackgroundColor);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &InfoWindow::onTabChanged);
     connect(ui->fontStyle, &QPushButton::clicked, this, &InfoWindow::changeFont);
+    loadSettings();
+
 }
 
 InfoWindow::~InfoWindow() {
+    saveSettings();
     delete ui;
 }
 
@@ -49,6 +58,8 @@ void InfoWindow::changeFont() {
                 .arg(font.italic() ? "italic" : "normal"); // Apply italic
             ui->tabWidget->setStyleSheet(style);
             ui->tabWidget->setFont(font);
+
+            saveSettings();
         }
     }
 }
@@ -63,6 +74,8 @@ void InfoWindow::changeBackgroundColor() {
         palette.setColor(QPalette::Window, m_currentColor);
         this->setAutoFillBackground(true);
         this->setPalette(palette);
+
+        saveSettings();
     }
 }
 
@@ -100,5 +113,70 @@ void InfoWindow::mouseReleaseEvent(QMouseEvent* event) {
         event->accept();
     }
 }
+
+void InfoWindow::saveSettings() {
+    QJsonObject settingsObj;
+    settingsObj["backgroundColor"] = m_currentColor.name();
+    settingsObj["fontColor"] = m_fontColor.name();
+    settingsObj["fontFamily"] = ui->tabWidget->font().family();
+    settingsObj["fontSize"] = ui->tabWidget->font().pointSize();
+    settingsObj["fontBold"] = ui->tabWidget->font().bold();
+    settingsObj["fontItalic"] = ui->tabWidget->font().italic();
+
+    QJsonDocument doc(settingsObj);
+
+    QString path = QDir::currentPath(); 
+    QFile file(path + "/settings.json");
+
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(doc.toJson());
+        file.close();
+        
+    }
+}
+
+
+
+void InfoWindow::loadSettings() {
+    QString path = QDir::currentPath();  
+    QFile file(path + "/settings.json");
+
+    if (file.open(QIODevice::ReadOnly)) {
+        QByteArray data = file.readAll();
+        file.close();
+
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        QJsonObject obj = doc.object();
+
+        if (obj.contains("backgroundColor"))
+            m_currentColor = QColor(obj["backgroundColor"].toString());
+        if (obj.contains("fontColor"))
+            m_fontColor = QColor(obj["fontColor"].toString());
+
+        QFont font;
+        font.setFamily(obj["fontFamily"].toString());
+        font.setPointSize(obj["fontSize"].toInt());
+        font.setBold(obj["fontBold"].toBool());
+        font.setItalic(obj["fontItalic"].toBool());
+
+        QPalette palette;
+        palette.setColor(QPalette::Window, m_currentColor);
+        this->setAutoFillBackground(true);
+        this->setPalette(palette);
+
+        QString style = QString("color: %1; font-family: %2; font-size: %3pt; font-weight: %4; font-style: %5;")
+            .arg(m_fontColor.name())
+            .arg(font.family())
+            .arg(font.pointSize())
+            .arg(font.bold() ? "bold" : "normal")
+            .arg(font.italic() ? "italic" : "normal");
+        ui->tabWidget->setStyleSheet(style);
+        ui->tabWidget->setFont(font);
+    }
+}
+
+
+
+
 
 
