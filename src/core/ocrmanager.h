@@ -42,7 +42,7 @@ protected:
 
 	static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
 	QString encodeImageToBase64(const QString& imagePath);
-	QString fetchOCRResponse(const QString& imagePath);
+	QJsonDocument fetchOCRResponse(const QString& imagePath);
 private:
 	cv::Mat loadImage(const QString& imagePath);
 	bool isCJLanguage(const QString& language);

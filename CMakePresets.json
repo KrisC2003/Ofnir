@@ -4,7 +4,7 @@
     {
       "hidden": true,
       "name": "base",
-      "generator": "Visual Studio 17 2022",
+      "generator": "Ninja",
       "description": "This is the default preset for all the builds currently",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": {
@@ -23,7 +23,7 @@
       "name": "release",
       "inherits": "base",
       "displayName": "Release",
-      "generator": "Visual Studio 17 2022",
+      "generator": "Ninja",
       "description": "Release CMake",
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
@@ -34,7 +34,7 @@
       "name": "debug",
       "inherits": "base",
       "displayName": "Debug",
-      "generator": "Visual Studio 17 2022",
+      "generator": "Ninja",
       "description": "Test CMake",
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
@@ -66,7 +66,7 @@
   ],
   "vendor": {
     "qt-project.org/Presets": {
-      "checksum": "EOhTPfUcEtL4QbiX62WUqHBgPUo="
+      "checksum": "h1+KBFCaSFg83Gkw7oh0xXFx3mI="
     }
   }
 }

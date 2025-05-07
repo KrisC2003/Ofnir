@@ -16,15 +16,13 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
     cv::Mat resultFiltered = img.clone();
     cv::imwrite("processed_img.png", resultFiltered);
 
-
-    QString response = fetchOCRResponse(imagePath);
     int maxRetries = 2;
     int retryCount = 0;
     QString resultText;
 
     while (retryCount < maxRetries) {
         try {
-            QJsonDocument jsonDoc = QJsonDocument::fromJson(response.toUtf8());
+            QJsonDocument jsonDoc = fetchOCRResponse(imagePath);
             QJsonObject jsonResponse = jsonDoc.object();
             QJsonArray responses = jsonResponse["responses"].toArray();
 
@@ -104,8 +102,8 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
 // translates text 
 QString OCRManager::translateText(const QString& text, const QString& targetLang) {
     QString response;
-
     QNetworkRequest request;
+
     QString url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey +
         "&q=" + QUrl::toPercentEncoding(text) + "&target=" + targetLang;
 
@@ -115,7 +113,7 @@ QString OCRManager::translateText(const QString& text, const QString& targetLang
     QEventLoop eventLoop;
     connect(networkManager, &QNetworkAccessManager::finished, &eventLoop, &QEventLoop::quit);
 
-    networkManager->get(request);
+    QNetworkReply* reply = networkManager->get(request);
 
     //prevents infinite hang due to network issues 
     // TODO: pass to error handler to give message in this scenario
@@ -128,7 +126,7 @@ QString OCRManager::translateText(const QString& text, const QString& targetLang
 
     QString translatedText;
     if (checkNetworkStatus()) {
-        QByteArray responseData = networkManager->get(request)->readAll();
+        QByteArray responseData = reply->readAll();
         QJsonDocument jsonResponse = QJsonDocument::fromJson(responseData);
         if (!jsonResponse.isNull()) {
             QJsonObject responseObject = jsonResponse.object();
@@ -144,7 +142,62 @@ QString OCRManager::translateText(const QString& text, const QString& targetLang
             }
         }
     }
+    reply->deleteLater();
     return translatedText;
+}
+
+QJsonDocument OCRManager::fetchOCRResponse(const QString& imagePath) {
+    QNetworkRequest request;
+    QString base64Image = encodeImageToBase64(imagePath);
+    if (base64Image.isEmpty()) {
+        qWarning() << "Failed to encode image.";
+        return QJsonDocument();
+    }
+
+    QJsonObject requestBody = {
+        { "requests", QJsonArray{
+            QJsonObject{
+                { "image", QJsonObject{
+                    { "content", base64Image }
+                }},
+                { "features", QJsonArray{
+                    QJsonObject{ { "type", "TEXT_DETECTION" } }
+                }}
+            }
+        }}
+    };
+
+    QString url = QString("https://vision.googleapis.com/v1/images:annotate?key=%1").arg(apiKey);
+    request.setUrl(QUrl(url));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QEventLoop eventLoop;
+
+    QJsonDocument requestData(requestBody);
+
+    QNetworkReply* reply = networkManager->post(request, requestData.toJson());
+
+    connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
+
+    //prevents infinite hang due to network issues 
+    // TODO: pass to error handler to give message in this scenario
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &eventLoop, &QEventLoop::quit);
+    timer.start(5000);
+
+    eventLoop.exec();
+
+    QJsonDocument jsonResponse;
+    if (checkNetworkStatus() && reply->error() == QNetworkReply::NoError) {
+        QByteArray responseData = reply->readAll();
+        jsonResponse = QJsonDocument::fromJson(responseData);
+    }
+    else {
+        qWarning() << "Network error or status check failed:" << reply->errorString();
+    }
+    reply->deleteLater();
+    return jsonResponse;
 }
 
 cv::Mat OCRManager::loadImage(const QString& imagePath) {
@@ -186,53 +239,10 @@ QString OCRManager::encodeImageToBase64(const QString& imagePath) {
     return imageData.toBase64();
 }
 
+// not used anymore?
 size_t OCRManager::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
-}
-
-QString OCRManager::fetchOCRResponse(const QString& imagePath) {
-    QString base64Image = encodeImageToBase64(imagePath);
-
-    QJsonObject requestBody = {
-        { "requests", QJsonArray{
-            QJsonObject{
-                { "image", QJsonObject{
-                    { "content", base64Image }
-                }},
-                { "features", QJsonArray{
-                    QJsonObject{ { "type", "TEXT_DETECTION" } }
-                }}
-            }
-        }}
-    };
-
-    QByteArray response;
-
-    CURL* curl = curl_easy_init();
-    if (curl) {
-        QString url = QString("https://vision.googleapis.com/v1/images:annotate?key=%1").arg(apiKey);
-
-        QJsonDocument doc(requestBody);
-        QByteArray requestData = doc.toJson();
-
-        struct curl_slist* headers = NULL;
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-
-        curl_easy_setopt(curl, CURLOPT_URL, url.toUtf8().constData());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestData.constData());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-        CURLcode res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            qWarning() << "curl_easy_perform() failed: " << curl_easy_strerror(res);
-        }
-        curl_slist_free_all(headers);
-        curl_easy_cleanup(curl);
-    }
-    return QString::fromUtf8(response);
 }
 
 bool OCRManager::checkNetworkStatus() {

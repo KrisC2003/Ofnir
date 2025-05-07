@@ -54,7 +54,7 @@ void screenCaptureWidget::mouseReleaseEvent(QMouseEvent* event)
 	m_selectionStartPos = QPoint();
 	m_selectionEndPos = QPoint();
 
-	QString filename = "screenshot_" + QDateTime::currentDateTime().toString("yyyy.MM.dd_HH:mm:ss") + ".png";
+	QString filename = "screenshot_" + QDateTime::currentDateTime().toString("yyyy.MM.dd_HH-mm-ss") + ".png";
 
 	QDir dir(m_savePath);
 	QString fullPath = dir.filePath(filename);
