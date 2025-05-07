@@ -1,9 +1,15 @@
 #include "infowindow.h"
 #include "ui_infowindow.h"
+#include "filelistwidget.h"
+
 #include "src/settings/globalHotkeyFilter.h"
 #include "screenCaptureWidget.h"
 #include <QCloseEvent>
 #include <QMouseEvent>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QListWidget>
+#include <QStringList>
 #include <QColorDialog>
 #include <QPalette>
 #include <QFontDialog>
@@ -12,7 +18,7 @@
 #include <QFile>
 #include <QStandardPaths>
 #include <QMessageBox>
-
+#include <QJsonArray>
 #define HOTKEY_ID 1001
 
 InfoWindow::InfoWindow(QDialog* parent)
@@ -20,13 +26,45 @@ InfoWindow::InfoWindow(QDialog* parent)
 {
 
     ui->setupUi(this);
+    ui->importButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #dedede;"
+        "  border: none;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #898989;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #898989;"
+        "}"
+    );
+
+    ui->exportButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #dedede;"
+       
+        "  border: none;"
+       
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #898989;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #898989;"
+        "}"
+    );
+
     setWindowFlags(Qt::FramelessWindowHint);
     //connects ui buttons to functions
     connect(ui->closeButton, &QPushButton::clicked, this, &InfoWindow::close);
     connect(ui->colorButton, &QPushButton::clicked, this, &InfoWindow::changeBackgroundColor);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &InfoWindow::onTabChanged);
     connect(ui->fontStyle, &QPushButton::clicked, this, &InfoWindow::changeFont);
+    connect(ui->importButton, &QPushButton::clicked, this, &InfoWindow::importFile);
+
+
     loadSettings();
+    loadImportedFiles();
 
 }
 
@@ -34,6 +72,72 @@ InfoWindow::~InfoWindow() {
     saveSettings();
     delete ui;
 }
+
+void InfoWindow::importFile() {
+    QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "All Files (*.*)");
+
+    if (!fileName.isEmpty()) {
+        QFileInfo fileInfo(fileName);
+        QString displayName = fileInfo.fileName();
+
+        if (!m_importedFiles.contains(fileName)) {
+            m_importedFiles.append(fileName);
+            ui->fileListWidget->addItem(displayName);
+            saveImportedFiles();  
+        }
+        else {
+            QMessageBox::information(this, "Already Imported", "This file is already in the list.");
+        }
+    }
+}
+
+void InfoWindow::saveImportedFiles() {
+    QJsonArray jsonArray;
+    for (const QString& filePath : m_importedFiles) {
+        jsonArray.append(filePath);
+    }
+
+    QJsonObject jsonObject;
+    jsonObject["files"] = jsonArray;
+
+    QJsonDocument doc(jsonObject);
+    QString path = QDir::currentPath() + "/imported_files.json";
+    QFile file(path);
+
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(doc.toJson());
+        file.close();
+    }
+}
+
+
+void InfoWindow::loadImportedFiles() {
+    QString path = QDir::currentPath() + "/imported_files.json";
+    QFile file(path);
+
+    if (file.open(QIODevice::ReadOnly)) {
+        QByteArray data = file.readAll();
+        file.close();
+
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        QJsonObject obj = doc.object();
+
+        if (obj.contains("files")) {
+            QJsonArray filesArray = obj["files"].toArray();
+            for (const QJsonValue& value : filesArray) {
+                QString filePath = value.toString();
+                QFileInfo fileInfo(filePath);
+                if (fileInfo.exists()) {
+                    ui->fileListWidget->addItem(fileInfo.fileName());
+                    m_importedFiles.append(filePath);
+                }
+            }
+        }
+    }
+}
+
+
+
 
 void InfoWindow::onTabChanged(int index)
 {
@@ -84,6 +188,7 @@ void InfoWindow::closeEvent(QCloseEvent* event) {
     event->ignore();
     this->hide();
 }
+
 
 // Mouse press events (For dragging)
 void InfoWindow::mousePressEvent(QMouseEvent* event) {

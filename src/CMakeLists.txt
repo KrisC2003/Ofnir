@@ -4,7 +4,7 @@
 #list(APPEND CMAKE_PREFIX_PATH "C:/Libraries/tesseract-install")
 #find_package(Tesseract REQUIRED)
 
-list(APPEND CMAKE_PREFIX_PATH "C:/Libraries/Qt/6.9.0/msvc2022_64")
+list(APPEND CMAKE_PREFIX_PATH "C:/Qt/6.9.0/msvc2022_64")
 find_package(Qt6 COMPONENTS Core Gui Widgets Network REQUIRED)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)

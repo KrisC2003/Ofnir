@@ -3,7 +3,8 @@
 #include <QDialog>
 #include <QColor>
 #include <QPoint>
-
+#include <QListWidget> 
+#include "filelistwidget.h"
 
 namespace Ui {
     class InfoWindow;
@@ -29,19 +30,28 @@ class InfoWindow : public QDialog
         void changeBackgroundColor();
         void changeFont();
         void onTabChanged(int index);
+        void importFile();
 
 
     private:
         void saveSettings();       
         void loadSettings();
-        QColor m_currentColor;  // Add this line to track the selected background color
+        void loadImportedFiles();
+        void saveImportedFiles();
+        QColor m_currentColor;  
         QFont m_currentFont;
         QColor m_fontColor;
+        QStringList m_importedFiles;
+
+        FileListWidget* customList = nullptr;
+ 
+
 
         Ui::InfoWindow* ui;
 
         QPoint m_dragPosition;
-        bool m_dragging = false;  // Added this line
+        bool m_dragging = false;  
         int m_dragAreaHeight = 30;  // Define the draggable area height
+    
 };
 
