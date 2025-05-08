@@ -1,7 +1,7 @@
 #include "infowindow.h"
 #include "ui_infowindow.h"
 #include "filelistwidget.h"
-
+#include <QIcon>
 #include "src/settings/globalHotkeyFilter.h"
 #include "screenCaptureWidget.h"
 #include <QCloseEvent>
@@ -26,6 +26,7 @@ InfoWindow::InfoWindow(QDialog* parent)
 {
 
     ui->setupUi(this);
+    setWindowIcon(QIcon(":/icon.png"));
     ui->importButton->setStyleSheet(
         "QPushButton {"
         "  background-color: #dedede;"
