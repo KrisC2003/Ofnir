@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QObject>
 #include <QDir>
+#include <QThread>
 #include <QStandardPaths>
 #include "src/widgets/trayicon.h"
 #include "src/widgets/screencapturewidget.h"
@@ -19,7 +20,7 @@ class OfnirDaemon : public QObject
 public:
 	explicit OfnirDaemon(QObject* parent = nullptr);
 	virtual ~OfnirDaemon() = default;
-	QString m_historyFolderPath;
+	QString m_folderPath;
 protected:
 	bool changeHotkeys();
 	bool saveToHistory();
@@ -27,8 +28,9 @@ protected:
 private:
 	void initTrayIcon();
 	void initHotkeys();
+	void initFolderPath();
 
-	OCRManager m_ocrManager;
+	OCRManager* m_ocrManager;
 
 	QScreen* m_screen;
 	globalHotkeyFilter* hotkeyFilter = nullptr;

@@ -3,18 +3,16 @@
 #include "ofnirdaemon.h"
 
 // Handle background related tasks and initialization
-OfnirDaemon::OfnirDaemon(QObject* parent) 
-    : QObject(parent) 
+OfnirDaemon::OfnirDaemon(QObject* parent)
+    : QObject(parent)
+    , m_screen(QApplication::primaryScreen())
+    , m_folderPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+    , m_ocrManager(new OCRManager())
+    
 {
     initTrayIcon();
     initHotkeys();
-    m_screen = QApplication::primaryScreen();
-    m_historyFolderPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/ocr_history";
-
-    QDir dir;
-    if (!dir.exists(m_historyFolderPath)) {
-        dir.mkpath(m_historyFolderPath);  // Creates the folder if needed
-    }
+    initFolderPath();
 }
 
 void OfnirDaemon::initTrayIcon() {
@@ -27,11 +25,17 @@ void OfnirDaemon::initHotkeys() {
 
     qApp->installNativeEventFilter(nativeFilter);
     connect(nativeFilter, &globalHotkeyFilter::hotkeyPressed, this, [this]() {
-            screenCaptureWidget* widget = new screenCaptureWidget(m_screen, m_historyFolderPath);
-            connect(widget, &screenCaptureWidget::screenshotCaptured, this, &OfnirDaemon::handleScreenshotCaptured);
-
+        screenCaptureWidget* widget = new screenCaptureWidget(m_screen, m_folderPath + "/ocr_history");
+        connect(widget, &screenCaptureWidget::screenshotCaptured, this, &OfnirDaemon::handleScreenshotCaptured);
         }
     );
+}
+
+void OfnirDaemon::initFolderPath() {
+    QDir dir;
+    if (!dir.exists(m_folderPath)) {
+        dir.mkpath(m_folderPath);  // Creates the folder if needed
+    }
 }
 
 bool OfnirDaemon::changeHotkeys() {
@@ -48,5 +52,5 @@ bool OfnirDaemon::saveToHistory() {
 }
 
 void OfnirDaemon::handleScreenshotCaptured(const QString& imagePath) {
-    m_ocrManager.processOCRWithConfidence(imagePath);
+    m_ocrManager->processOCRWithConfidence(imagePath);
 }

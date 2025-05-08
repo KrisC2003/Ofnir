@@ -24,7 +24,6 @@ protected:
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void paintEvent(QPaintEvent* event) override;
-	//void hideEvent(QHideEvent* event) override;
 private:
 	QRect updateRect();
 

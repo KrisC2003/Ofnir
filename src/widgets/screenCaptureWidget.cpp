@@ -22,7 +22,7 @@ QRect screenCaptureWidget::updateRect() {
 
 // TODO: try to reduce the flashing effect and also maybe not require repainting
 void screenCaptureWidget::mousePressEvent(QMouseEvent* event) 
-{
+{	
 	if (event->button() != Qt::LeftButton) return;
 
 	m_selectionStartPos = m_selectionEndPos = event->pos();
@@ -63,8 +63,11 @@ void screenCaptureWidget::mouseReleaseEvent(QMouseEvent* event)
 	capturedImg.save(fullPath);
 
 	setCursor(Qt::ArrowCursor);
+
+	hide();
 	emit screenshotCaptured(fullPath);
 	deleteLater();
+
 }
 
 void screenCaptureWidget::paintEvent(QPaintEvent* event)
