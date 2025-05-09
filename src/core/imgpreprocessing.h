@@ -11,8 +11,12 @@ public:
 	void initPreprocessImg(cv::Mat& img);
 	bool preprocessImg(cv::Mat& img, float confidence);
 protected:
-	void medConfPreprocessing();
-	void lowConfPreprocessing();
+	void medConfPreprocessing(cv::Mat& img);
+	void lowConfPreprocessing(cv::Mat& img);
+	void denoise(cv::Mat& img);
+	void sharpen(cv::Mat& img);
+	void adaptiveThresholding(cv::Mat& img);
+	void morphologyClean(cv::Mat& img);
 private:
 	
 };

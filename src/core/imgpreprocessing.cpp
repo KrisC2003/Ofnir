@@ -53,11 +53,11 @@ bool ImgPreprocessing::preprocessImg(cv::Mat& img, float confidence) {
             return false;
         case ConfidenceTier::Medium:
             // partial pipeline (add Sharpening, Bilateral if needed)
-            medConfPreprocessing();
+            medConfPreprocessing(img);
             return true;
         case ConfidenceTier::Low:
             // Apply full pipeline
-            lowConfPreprocessing();
+            lowConfPreprocessing(img);
             return true;
         case ConfidenceTier::VeryLow:
             // Trigger manual intervention or fallback
@@ -66,11 +66,39 @@ bool ImgPreprocessing::preprocessImg(cv::Mat& img, float confidence) {
 
     return false;
 }
-void ImgPreprocessing::medConfPreprocessing() {
+void ImgPreprocessing::denoise(cv::Mat& img) {
+    cv::fastNlMeansDenoising(img, img, 30);
+}
 
+void ImgPreprocessing::sharpen(cv::Mat& img) {
+    cv::Mat kernel = (cv::Mat_<float>(3, 3) <<
+        0, -1, 0,
+        -1, 5, -1,
+        0, -1, 0);
+    cv::filter2D(img, img, img.depth(), kernel);
+}
+
+void ImgPreprocessing::adaptiveThresholding(cv::Mat& img) {
+    cv::adaptiveThreshold(img, img, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv::THRESH_BINARY, 11, 2);
+}
+
+void ImgPreprocessing::morphologyClean(cv::Mat& img) {
+    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, { 2, 2 });
+    cv::morphologyEx(img, img, cv::MORPH_CLOSE, kernel);
+}
+
+void ImgPreprocessing::medConfPreprocessing(cv::Mat& img) {
+    denoise(img);
+    sharpen(img);
+    adaptiveThresholding(img);
     return;
 }
 
-void ImgPreprocessing::lowConfPreprocessing() {
+void ImgPreprocessing::lowConfPreprocessing(cv::Mat& img) {
+    denoise(img);
+    morphologyClean(img);
+    sharpen(img);
+    adaptiveThresholding(img);
     return;
 }
