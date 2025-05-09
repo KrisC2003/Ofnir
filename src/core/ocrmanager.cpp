@@ -6,7 +6,7 @@ OCRManager::OCRManager(QObject* parent) : QObject(parent) {
 
 // retries until maxRetries or confidence level is met
 // TODO: future remake for compatibility with languages other than <select language> -> english
-QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
+QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath) {
     cv::Mat img = loadImage(imagePath);
     imgProcessor.initPreprocessImg(img);
 
@@ -23,8 +23,8 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
     bool responseSuccess = fetchOCRResponse(imagePath, responseData);
 
     if (!responseSuccess) {
-        qDebug() << "OCR request failed";
-        return "OCR Request failed";
+        qWarning() << "OCR request failed";
+        return QVector<BlockData>();
     }
 
     // Parse and process the response data
@@ -33,7 +33,7 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
 
     if (parseError.error != QJsonParseError::NoError || jsonResponse.isNull()) {
         qWarning() << "Failed to parse translation response:" << parseError.errorString();
-        return QString();
+        return QVector<BlockData>();
     }
 
     QJsonObject jsonResponseObj = jsonResponse.object();
@@ -41,18 +41,21 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
 
     if (responses.isEmpty() || !responses[0].toObject().contains("fullTextAnnotation")) {
         qWarning() << "No text detected.";
-        return "No text detected";
+        return QVector<BlockData>();
     }
 
     QJsonObject annotation = responses[0].toObject()["fullTextAnnotation"].toObject();
     QString text = annotation["text"].toString();
     if (text.isEmpty()) {
         qWarning() << "Empty text field in annotation.\n";
-        return "No text detected";
+        return QVector<BlockData>();
     }
 
     QJsonArray pages = annotation["pages"].toArray();
     float lowestBlockConfidence = 1.0f;
+
+    QVector<BlockData> allBlocks;
+
     for (const QJsonValue& pageVal : pages) {
         QJsonObject page = pageVal.toObject();
         QJsonArray blocks = page["blocks"].toArray();
@@ -60,11 +63,15 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
         for (const QJsonValue& blockVal : blocks) {
             QJsonObject block = blockVal.toObject();
             float blockConfidence = block.value("confidence").toDouble(1.0f);
-
             if (blockConfidence < lowestBlockConfidence) {
                 lowestBlockConfidence = blockConfidence;
             }
 
+            BlockData blockData;
+            QJsonObject boundingBoxObj = block["boundingBox"].toObject();
+            blockData.boundingBox = parseBoundingBox(boundingBoxObj);
+
+            QString paragraphText;
             QJsonArray paragraphs = block["paragraphs"].toArray();
             for (const QJsonValue& paragraphVal : paragraphs) {
                 QJsonObject paragraph = paragraphVal.toObject();
@@ -74,15 +81,21 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
                     QJsonObject word = wordVal.toObject();
                     QJsonArray symbols = word["symbols"].toArray();
 
-                    QString wordText;
                     for (const QJsonValue& symbolVal : symbols) {
                         QJsonObject symbol = symbolVal.toObject();
-                        wordText += symbol["text"].toString();
+                        paragraphText += symbol["text"].toString();
                     }
-                    resultText += wordText + " ";
+                    QJsonObject property = symbols.last().toObject()["property"].toObject();
+                    QString breakType = property["detectedBreak"].toObject()["type"].toString();
+                    if (breakType == "SPACE") {
+                        paragraphText += " ";
+                    }
+                    else if (breakType == "LINE_BREAK") {
+                        paragraphText += "\n";
+                    }
                 }
-                resultText += "\n";
             }
+            allBlocks.push_back(blockData);
         }
     }
 
@@ -96,7 +109,8 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
         // Optionally, you could update the OCR response if needed and reprocess
         responseSuccess = fetchOCRResponse(imagePath, responseData);
         if (!responseSuccess) {
-            return "OCR Request failed during retry";
+            qWarning() << "failed to fetch OCR response";
+            return QVector<BlockData>();
         }
 
         retryCount++;
@@ -106,9 +120,25 @@ QString OCRManager::processOCRWithConfidence(const QString& imagePath) {
         qWarning() << "Max retries reached";
     }
     qDebug() << "Debug message: " << resultText;
-    return resultText;
+    return allBlocks;
 }
+QRect OCRManager::parseBoundingBox(const QJsonObject& boundingBoxObj) {
+    QJsonArray verticesJson = boundingBoxObj["vertices"].toArray();
+    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
 
+    for (const QJsonValue& v : verticesJson) {
+        QJsonObject point = v.toObject();
+        int x = point["x"].toInt(0);
+        int y = point["y"].toInt(0);
+        minX = std::min(minX, x);
+        minY = std::min(minY, y);
+        maxX = std::max(maxX, x);
+        maxY = std::max(maxY, y);
+    }
+
+    return QRect(minX, minY, maxX - minX, maxY - minY);
+}
+}
 // translates text 
 QString OCRManager::translateText(const QString& text, const QString& targetLang) {
     if (text.isEmpty()) {
@@ -180,6 +210,9 @@ QString OCRManager::translateText(const QString& text, const QString& targetLang
 }
 
 bool OCRManager::fetchOCRResponse(const QString& imagePath, QByteArray& responseData) {
+    if (!checkNetworkStatus()) {
+        return false;
+    }
     QNetworkRequest request;
     QString base64Image = encodeImageToBase64(imagePath);
     if (base64Image.isEmpty()) {
@@ -221,6 +254,7 @@ bool OCRManager::fetchOCRResponse(const QString& imagePath, QByteArray& response
         return false;
     }
 }
+
 
 cv::Mat OCRManager::loadImage(const QString& imagePath) {
     std::string stringPath = imagePath.toStdString();
