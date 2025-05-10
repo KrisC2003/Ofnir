@@ -26,6 +26,8 @@ InfoWindow::InfoWindow(QDialog* parent)
 {
 
     ui->setupUi(this);
+    hotkeyFilter = new globalHotkeyFilter(this);
+
     setWindowIcon(QIcon(":/icon.png"));
     ui->importButton->setStyleSheet(
         "QPushButton {"
@@ -57,13 +59,17 @@ InfoWindow::InfoWindow(QDialog* parent)
 
     setWindowFlags(Qt::FramelessWindowHint);
     //connects ui buttons to functions
+    connect(hotkeyFilter, &globalHotkeyFilter::hotkeyUpdated, this, [this](const QString& hotkeyText) {
+        ui->currhotkey->setText(hotkeyText);  
+        });
+
     connect(ui->closeButton, &QPushButton::clicked, this, &InfoWindow::close);
     connect(ui->colorButton, &QPushButton::clicked, this, &InfoWindow::changeBackgroundColor);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &InfoWindow::onTabChanged);
     connect(ui->fontStyle, &QPushButton::clicked, this, &InfoWindow::changeFont);
     connect(ui->importButton, &QPushButton::clicked, this, &InfoWindow::importFile);
 
-
+    hotkeyFilter->registerShortcut();
     loadSettings();
     loadImportedFiles();
 

@@ -5,7 +5,7 @@
 #include <QPoint>
 #include <QListWidget> 
 #include "filelistwidget.h"
-
+#include "src/settings/globalHotkeyFilter.h"
 namespace Ui {
     class InfoWindow;
 }
@@ -34,6 +34,7 @@ class InfoWindow : public QDialog
 
 
     private:
+        globalHotkeyFilter* hotkeyFilter;
         void saveSettings();       
         void loadSettings();
         void loadImportedFiles();
