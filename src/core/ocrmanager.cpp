@@ -138,7 +138,6 @@ QRect OCRManager::parseBoundingBox(const QJsonObject& boundingBoxObj) {
 
     return QRect(minX, minY, maxX - minX, maxY - minY);
 }
-}
 // translates text 
 QString OCRManager::translateText(const QString& text, const QString& targetLang) {
     if (text.isEmpty()) {

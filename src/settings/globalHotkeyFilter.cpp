@@ -1,17 +1,47 @@
 #include "globalHotkeyFilter.h"
 #include <QMap>
 #include <QDebug>
+#include <QKeySequence>
 
 globalHotkeyFilter::globalHotkeyFilter(QObject* parent) : QObject(parent) {
 
 }
 
+// Update QLabel to display current hotkey
+void globalHotkeyFilter::updateHotkeyDisplay() {
+    QString hotkeyText = getHotkeyDisplayText(m_savedHotkey.keycode, m_savedHotkey.modifier);
+    emit hotkeyUpdated(hotkeyText); // Signal to update the label
+}
+
+QString globalHotkeyFilter::getHotkeyDisplayText(quint32 keycode, quint32 modifiers) {
+    QStringList modifierNames;
+
+    if (modifiers & MOD_SHIFT) {
+        modifierNames << "Shift";
+    }
+    if (modifiers & MOD_CONTROL) {
+        modifierNames << "Ctrl";
+    }
+    if (modifiers & MOD_ALT) {
+        modifierNames << "Alt";
+    }
+    if (modifiers & MOD_WIN) {
+        modifierNames << "Win";
+    }
+
+    // Get the key sequence from the keycode
+    QKeySequence keySeq(static_cast<int>(keycode));
+    QString keyText = keySeq.toString(QKeySequence::NativeText);
+
+    return modifierNames.join("+") + "+" + keyText;
+}
+
 bool globalHotkeyFilter::nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result)
 {
     Q_UNUSED(eventType)
-    Q_UNUSED(result)
+        Q_UNUSED(result)
 
-    MSG* msg = static_cast<MSG*>(message);
+        MSG* msg = static_cast<MSG*>(message);
     if (msg->message == WM_HOTKEY) {
         const quint32 keycode = HIWORD(msg->lParam);
         const quint32 modifiers = LOWORD(msg->lParam);
@@ -48,7 +78,6 @@ quint32 globalHotkeyFilter::nativeModifier(Qt::KeyboardModifiers modifier) {
         bitmask |= MOD_WIN;
     return bitmask;
 }
-
 // for special keys that arent just the basic keys
 quint32 globalHotkeyFilter::getSpecialVirtualKeyCode(Qt::Key keycode) {
     static QMap<Qt::Key, quint32> keyMap = {
@@ -139,12 +168,12 @@ quint32 globalHotkeyFilter::getSpecialVirtualKeyCode(Qt::Key keycode) {
 bool globalHotkeyFilter::registerShortcut() {
     m_savedHotkey = { nativeKeycode(Qt::Key_X), nativeModifier(Qt::AltModifier) }; // test temp
     RegisterHotKey(NULL, 1, m_savedHotkey.modifier | MOD_NOREPEAT, m_savedHotkey.keycode);
+
+    updateHotkeyDisplay(); // Update the display after registering the hotkey
     return true;
 }
-
 // we only really need 1 hotkey atm so yea
 bool globalHotkeyFilter::unregisterShortcut() {
-    UnregisterHotKey(NULL, 1); 
+    UnregisterHotKey(NULL, 1);
     return true;
 }
-

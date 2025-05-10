@@ -2,7 +2,8 @@
 
 #include <QAbstractNativeEventFilter>
 #include <QObject>
-#include <qt_windows.h> 
+#include <qt_windows.h>
+#include <QString> // For QString
 
 struct Hotkey {
     quint32 keycode;
@@ -12,6 +13,7 @@ struct Hotkey {
         return keycode == other.keycode && modifier == other.modifier;
     }
 };
+
 class globalHotkeyFilter : public QObject, public QAbstractNativeEventFilter
 {
     Q_OBJECT
@@ -21,6 +23,7 @@ public:
     bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override;
     bool registerShortcut();
     bool unregisterShortcut();
+
 protected:
     quint32 nativeKeycode(Qt::Key keycode);
     quint32 getSpecialVirtualKeyCode(Qt::Key keycode);
@@ -29,6 +32,11 @@ protected:
 private:
     Hotkey m_savedHotkey;
 
+    
+    void updateHotkeyDisplay(); 
+    QString getHotkeyDisplayText(quint32 keycode, quint32 modifiers);  // Converts the hotkey to string
+
 signals:
     void hotkeyPressed();
+    void hotkeyUpdated(const QString& hotkeyText);
 };
