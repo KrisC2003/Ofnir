@@ -1,5 +1,3 @@
-#include "src/settings/globalHotkeyFilter.h"
-#include "src/widgets/infowindow.h"
 #include "ofnirdaemon.h"
 
 // Handle background related tasks and initialization
@@ -7,7 +5,7 @@ OfnirDaemon::OfnirDaemon(QObject* parent)
     : QObject(parent)
     , m_screen(QApplication::primaryScreen())
     , m_folderPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
-    , m_ocrManager(new OCRManager())
+    , m_ocrManager(new OCRManager(this))
     
 {
     initTrayIcon();
@@ -51,6 +49,12 @@ bool OfnirDaemon::saveToHistory() {
     return true;
 }
 
-void OfnirDaemon::handleScreenshotCaptured(const QString& imagePath) {
-    m_ocrManager->processOCRWithConfidence(imagePath);
+void OfnirDaemon::handleScreenshotCaptured(const QString imagePath, const QRect overlayOffset) {
+    QVector<QPair<QString, QRect>> blockVector = m_ocrManager->processOCRWithConfidence(imagePath);
+    if (blockVector.isEmpty()) {
+        qWarning() << "Block data vector returned is empty";
+    }
+    else {
+        ResultOverlay* widget = new ResultOverlay(blockVector, overlayOffset);
+    }
 }

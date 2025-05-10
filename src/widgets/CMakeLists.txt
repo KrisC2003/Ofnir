@@ -4,12 +4,12 @@
 target_sources(${PROJECT_NAME} PRIVATE 
 	infowindow.cpp
 	screencapturewidget.cpp
-	#translationoverlaywidget.cpp
+	resultoverlay.cpp
 	trayicon.cpp
 
 	infowindow.h
 	screencapturewidget.h
-	#translationoverlaywidget.h
+	resultoverlay.h
 	trayicon.h
 
 	infowindow.ui

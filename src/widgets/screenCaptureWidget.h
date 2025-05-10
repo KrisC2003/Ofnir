@@ -41,6 +41,6 @@ private:
 	bool m_mouseIsPressed;
 	bool m_overlayVisible;
 signals:
-	void screenshotCaptured(const QString& filePath);
+	void screenshotCaptured(const QString filePath, const QRect overlayOffset);
 };
 

@@ -65,7 +65,7 @@ void screenCaptureWidget::mouseReleaseEvent(QMouseEvent* event)
 	setCursor(Qt::ArrowCursor);
 
 	hide();
-	emit screenshotCaptured(fullPath);
+	emit screenshotCaptured(fullPath, selectedArea);
 	deleteLater();
 
 }

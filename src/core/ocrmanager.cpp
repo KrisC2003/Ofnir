@@ -6,7 +6,7 @@ OCRManager::OCRManager(QObject* parent) : QObject(parent) {
 
 // retries until maxRetries or confidence level is met
 // TODO: future remake for compatibility with languages other than <select language> -> english
-QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath) {
+QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QString& imagePath) {
     cv::Mat img = loadImage(imagePath);
     imgProcessor.initPreprocessImg(img);
 
@@ -16,15 +16,13 @@ QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath
 
     int maxRetries = 2;
     int retryCount = 0;
-    QString resultText;
 
-    // Fetch the OCR response once before entering the retry loop
     QByteArray responseData;
     bool responseSuccess = fetchOCRResponse(imagePath, responseData);
 
     if (!responseSuccess) {
         qWarning() << "OCR request failed";
-        return QVector<BlockData>();
+        return QVector<QPair<QString, QRect>>();
     }
 
     // Parse and process the response data
@@ -33,7 +31,7 @@ QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath
 
     if (parseError.error != QJsonParseError::NoError || jsonResponse.isNull()) {
         qWarning() << "Failed to parse translation response:" << parseError.errorString();
-        return QVector<BlockData>();
+        return QVector<QPair<QString, QRect>>();
     }
 
     QJsonObject jsonResponseObj = jsonResponse.object();
@@ -41,20 +39,20 @@ QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath
 
     if (responses.isEmpty() || !responses[0].toObject().contains("fullTextAnnotation")) {
         qWarning() << "No text detected.";
-        return QVector<BlockData>();
+        return QVector<QPair<QString, QRect>>();
     }
 
     QJsonObject annotation = responses[0].toObject()["fullTextAnnotation"].toObject();
     QString text = annotation["text"].toString();
     if (text.isEmpty()) {
         qWarning() << "Empty text field in annotation.\n";
-        return QVector<BlockData>();
+        return QVector<QPair<QString, QRect>>();
     }
 
     QJsonArray pages = annotation["pages"].toArray();
     float lowestBlockConfidence = 1.0f;
 
-    QVector<BlockData> allBlocks;
+    QVector<QPair<QString, QRect>> allBlocks;
 
     for (const QJsonValue& pageVal : pages) {
         QJsonObject page = pageVal.toObject();
@@ -67,9 +65,8 @@ QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath
                 lowestBlockConfidence = blockConfidence;
             }
 
-            BlockData blockData;
             QJsonObject boundingBoxObj = block["boundingBox"].toObject();
-            blockData.boundingBox = parseBoundingBox(boundingBoxObj);
+            QRect boundingBoxData = parseBoundingBox(boundingBoxObj);
 
             QString paragraphText;
             QJsonArray paragraphs = block["paragraphs"].toArray();
@@ -85,19 +82,30 @@ QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath
                         QJsonObject symbol = symbolVal.toObject();
                         paragraphText += symbol["text"].toString();
                     }
+                    paragraphText = paragraphText.trimmed();
+                    // Skip if blockText is only numeric
+                    if (!paragraphText.contains(QRegularExpression("\\p{L}"))) {
+                        continue; // No letters = skip block
+                    }
+
                     QJsonObject property = symbols.last().toObject()["property"].toObject();
                     QString breakType = property["detectedBreak"].toObject()["type"].toString();
+
                     if (breakType == "SPACE") {
                         paragraphText += " ";
                     }
-                    else if (breakType == "LINE_BREAK") {
+                    else if (breakType == "EOL_SURE_SPACE" || breakType == "LINE_BREAK") {
                         paragraphText += "\n";
+                    }
+                    else if (breakType == "HYPHEN") {
+                        paragraphText += "-";
                     }
                 }
             }
-            allBlocks.push_back(blockData);
+
+            allBlocks.push_back(QPair<QString, QRect>(paragraphText, boundingBoxData));
         }
-    }
+    };
 
     // Retry logic based on OCR confidence
     while (retryCount < maxRetries) {
@@ -106,11 +114,10 @@ QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath
             break;
         }
 
-        // Optionally, you could update the OCR response if needed and reprocess
         responseSuccess = fetchOCRResponse(imagePath, responseData);
         if (!responseSuccess) {
             qWarning() << "failed to fetch OCR response";
-            return QVector<BlockData>();
+            return QVector<QPair<QString, QRect>>();
         }
 
         retryCount++;
@@ -119,7 +126,9 @@ QVector<BlockData> OCRManager::processOCRWithConfidence(const QString& imagePath
     if (retryCount == maxRetries) {
         qWarning() << "Max retries reached";
     }
-    qDebug() << "Debug message: " << resultText;
+    //for (const QPair<QString, QRect>& block : allBlocks) {
+    //    qDebug() << "Debug message: " << block.first;
+    //}
     return allBlocks;
 }
 QRect OCRManager::parseBoundingBox(const QJsonObject& boundingBoxObj) {
@@ -138,7 +147,7 @@ QRect OCRManager::parseBoundingBox(const QJsonObject& boundingBoxObj) {
 
     return QRect(minX, minY, maxX - minX, maxY - minY);
 }
-}
+
 // translates text 
 QString OCRManager::translateText(const QString& text, const QString& targetLang) {
     if (text.isEmpty()) {
@@ -223,11 +232,11 @@ bool OCRManager::fetchOCRResponse(const QString& imagePath, QByteArray& response
     QJsonObject requestBody = {
         { "requests", QJsonArray{
             QJsonObject{
-                { "image", QJsonObject{
+                { "image", QJsonObject{ 
                     { "content", base64Image }
                 }},
                 { "features", QJsonArray{
-                    QJsonObject{ { "type", "TEXT_DETECTION" } }
+                    QJsonObject{ { "type", "DOCUMENT_TEXT_DETECTION" } }
                 }}
             }
         }}

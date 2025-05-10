@@ -11,27 +11,21 @@
 #include <QJsonArray>
 #include <QRect>
 #include <QTimer>
+#include <QRegularExpression>
 #include "opencv2/opencv.hpp"
 #include "imgpreprocessing.h" 
-
-struct BlockData {
-	QString text;
-	QRect boundingBox;
-};
 
 class OCRManager : public QObject {
 	Q_OBJECT
 public:
 	OCRManager(QObject* parent = nullptr);
 
-	QVector<BlockData> processOCRWithConfidence(const QString& imagePath);
+	QVector<QPair<QString, QRect>> processOCRWithConfidence(const QString& imagePath);
 	QString translateText(const QString& text, const QString& targetLang);
 	std::wstring convertMultilangUTF8ToWstring(const QString& str);
 
 protected:
 	QString htmlEntityDecode(const QString& input);
-
-	static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
 	QString encodeImageToBase64(const QString& imagePath);
 	bool fetchOCRResponse(const QString& imagePath, QByteArray& responseData);
 private:

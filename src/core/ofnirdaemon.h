@@ -4,8 +4,11 @@
 #include <QDir>
 #include <QThread>
 #include <QStandardPaths>
+#include "src/settings/globalHotkeyFilter.h"
+#include "src/widgets/infowindow.h"
 #include "src/widgets/trayicon.h"
 #include "src/widgets/screencapturewidget.h"
+#include "src/widgets/resultoverlay.h"
 #include "ocrmanager.h"
 
 class globalHotkeyFilter;
@@ -37,5 +40,5 @@ private:
 	TrayIcon* m_trayIcon = nullptr;
 
 private slots:
-	void handleScreenshotCaptured(const QString& imagePath);
+	void handleScreenshotCaptured(const QString imagePath, const QRect overlayOffset);
 };
