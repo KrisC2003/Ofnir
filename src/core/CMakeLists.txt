@@ -9,4 +9,4 @@ target_sources(${PROJECT_NAME} PRIVATE
 	ofnirdaemon.h
 	imgpreprocessing.h
 	ocrmanager.h
- "../widgets/filelistwidget.h" "../widgets/filelistwidget.cpp" "../widgets/resultoverlay.h")
+ "../widgets/filelistwidget.h" "../widgets/filelistwidget.cpp" "../widgets/resultoverlay.h" "../settings/settingsmanager.cpp" "../settings/settingsmanager.h")

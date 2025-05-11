@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QStandardPaths>
 #include "src/settings/globalHotkeyFilter.h"
+#include "src/settings/settingsmanager.h"
 #include "src/widgets/infowindow.h"
 #include "src/widgets/trayicon.h"
 #include "src/widgets/screencapturewidget.h"
@@ -34,6 +35,7 @@ private:
 	void initFolderPath();
 
 	OCRManager* m_ocrManager;
+	SettingsManager* m_settingsManager;
 
 	QScreen* m_screen;
 	globalHotkeyFilter* hotkeyFilter = nullptr;

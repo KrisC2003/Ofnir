@@ -16,7 +16,6 @@ ResultOverlay::ResultOverlay(const QVector<QPair<QString, QRect>>& blockVector, 
     activateWindow();
     setFocus();
 
-
     showQLabels();
 
 	update();
@@ -65,29 +64,30 @@ void ResultOverlay::showQLabels() {
             verticalOffset += label->height() + lineSpacing;
         }
     }
+    createUtilButtons();
+}
+
+void ResultOverlay::createUtilButtons() {
     QPushButton* hideButton = new QPushButton("Hide Labels", this);
-    int buttonWidth = 100;
-    int buttonHeight = 30;
+    QPushButton* closeButton = new QPushButton("Close", this);
 
     // Position it at bottom-left of m_offsetRect
     int x = m_offsetRect.left();
     int y = m_offsetRect.bottom();
 
-    hideButton->setGeometry(x, y, buttonWidth, buttonHeight);
-
+    int buttonSpacing = 10;
+    closeButton->setGeometry(x, y, 70, 30);
+    hideButton->setGeometry(x + closeButton->width() + buttonSpacing, y, 100, 30);
+    connect(closeButton, &QPushButton::clicked, this, [this]() { close(); });
     connect(hideButton, &QPushButton::clicked, this, &ResultOverlay::toggleLabelVisibility);
+    closeButton->show();
     hideButton->show();
 }
+
 void ResultOverlay::toggleLabelVisibility() {
     m_labelsVisible = !m_labelsVisible;
     for (QLabel* label : m_labels) {
         label->setVisible(m_labelsVisible);
-    }
-}
-void ResultOverlay::keyPressEvent(QKeyEvent* event) {
-    //qDebug() << event->key();
-    if (event->key() == Qt::Key_Escape) {
-        close();  // Triggers deletion
     }
 }
 

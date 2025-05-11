@@ -1,23 +1,23 @@
 #include "trayicon.h"
 
 
-TrayIcon::TrayIcon(QObject* parent) 
+TrayIcon::TrayIcon(SettingsManager* settings, QObject* parent) 
     : QSystemTrayIcon(parent)
 {
     QIcon appIcon(":/icon.png");
     setIcon(appIcon);
-    initMenu();
+    initMenu(settings);
     setToolTip("Ofnir");
     setContextMenu(m_menu);
     show();
 }
 
-void TrayIcon::initMenu() {
+void TrayIcon::initMenu(SettingsManager* settings) {
     m_menu = new QMenu();
 
     QAction* settingAction = new QAction("Setting", m_menu);
-    connect(settingAction, &QAction::triggered, [this]() {
-        m_infoWindow = new InfoWindow();
+    connect(settingAction, &QAction::triggered, [this, settings]() {
+        m_infoWindow = new InfoWindow(settings);
         m_infoWindow->show();
         m_infoWindow->raise();
         m_infoWindow->activateWindow();

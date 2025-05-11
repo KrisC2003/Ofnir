@@ -6,6 +6,7 @@ OfnirDaemon::OfnirDaemon(QObject* parent)
     , m_screen(QApplication::primaryScreen())
     , m_folderPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
     , m_ocrManager(new OCRManager(this))
+    , m_settingsManager(new SettingsManager(m_folderPath, this))
     
 {
     initTrayIcon();
@@ -14,7 +15,7 @@ OfnirDaemon::OfnirDaemon(QObject* parent)
 }
 
 void OfnirDaemon::initTrayIcon() {
-    m_trayIcon = new TrayIcon(this);
+    m_trayIcon = new TrayIcon(m_settingsManager, this);
 }
 
 void OfnirDaemon::initHotkeys() {

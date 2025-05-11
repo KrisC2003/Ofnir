@@ -8,18 +8,18 @@
 
 #include "infowindow.h"
 
-class QMenu;
 class InfoWindow;
+class SettingsManager;
 
 class TrayIcon : public QSystemTrayIcon
 {
 	Q_OBJECT
 public:
-	explicit TrayIcon(QObject* parent);
+	explicit TrayIcon(SettingsManager* settings, QObject* parent);
 	virtual ~TrayIcon() = default;
 
 private:
-	void initMenu();
+	void initMenu(SettingsManager* settings);
 	QMenu* m_menu = nullptr;
 	InfoWindow* m_infoWindow = nullptr;
 };

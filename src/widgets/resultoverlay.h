@@ -11,8 +11,8 @@ public:
 	ResultOverlay(const QVector<QPair<QString, QRect>>& blockVector, const QRect& offsetRect, QWidget* parent = nullptr);
 protected:
 	void showQLabels();
+	void createUtilButtons();
 	void toggleLabelVisibility();
-	void keyPressEvent(QKeyEvent* event);
 	void paintEvent(QPaintEvent* event) override;
 private:
 	QVector<QPair<QString, QRect>> m_blockVector;

@@ -1,78 +1,41 @@
 #include "infowindow.h"
 #include "ui_infowindow.h"
-#include "filelistwidget.h"
-#include <QIcon>
-#include "src/settings/globalHotkeyFilter.h"
-#include "screenCaptureWidget.h"
-#include <QCloseEvent>
-#include <QMouseEvent>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QListWidget>
-#include <QStringList>
-#include <QColorDialog>
-#include <QPalette>
-#include <QFontDialog>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QFile>
-#include <QStandardPaths>
-#include <QMessageBox>
-#include <QJsonArray>
-#define HOTKEY_ID 1001
 
-InfoWindow::InfoWindow(QDialog* parent)
-    : QDialog(parent), ui(new Ui::InfoWindow)
+InfoWindow::InfoWindow(SettingsManager* settings, QDialog* parent)
+    : QDialog(parent)
+    , ui(new Ui::InfoWindow)
+    , settingsManager(settings)
 {
 
     ui->setupUi(this);
     hotkeyFilter = new globalHotkeyFilter(this);
 
+    connect(this, &InfoWindow::settingChanged, settingsManager, &SettingsManager::onSettingChanged);
+    connect(this, &InfoWindow::multipleSettingsChanged, settingsManager, &SettingsManager::onSettingsChanged);
+    connect(settingsManager, &SettingsManager::settingsLoaded, this, &InfoWindow::applySettings);
+    settingsManager->load();
+
     setWindowIcon(QIcon(":/icon.png"));
-    ui->importButton->setStyleSheet(
-        "QPushButton {"
-        "  background-color: #dedede;"
-        "  border: none;"
-        "}"
-        "QPushButton:hover {"
-        "  background-color: #898989;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: #898989;"
-        "}"
-    );
-
-    ui->exportButton->setStyleSheet(
-        "QPushButton {"
-        "  background-color: #dedede;"
-       
-        "  border: none;"
-       
-        "}"
-        "QPushButton:hover {"
-        "  background-color: #898989;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: #898989;"
-        "}"
-    );
-
     setWindowFlags(Qt::FramelessWindowHint);
     //connects ui buttons to functions
+
+
     connect(hotkeyFilter, &globalHotkeyFilter::hotkeyUpdated, this, [this](const QString& hotkeyText) {
-        ui->currhotkey->setText(hotkeyText);  
+            QLabel* label = ui->tabWidget->findChild<QLabel*>("currHotkey");
+            label->setText(hotkeyText);
         });
 
     connect(ui->closeButton, &QPushButton::clicked, this, &InfoWindow::close);
-    connect(ui->colorButton, &QPushButton::clicked, this, &InfoWindow::changeBackgroundColor);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &InfoWindow::onTabChanged);
+
     connect(ui->fontStyle, &QPushButton::clicked, this, &InfoWindow::changeFont);
-    connect(ui->importButton, &QPushButton::clicked, this, &InfoWindow::importFile);
+    connect(ui->colorButton, &QPushButton::clicked, this, &InfoWindow::changeBackgroundColor);
+
+    //connect(ui->importButton, &QPushButton::clicked, this, &InfoWindow::importFile);
 
     hotkeyFilter->registerShortcut();
-    loadSettings();
+    //loadSettings();
     loadImportedFiles();
-
 }
 
 InfoWindow::~InfoWindow() {
@@ -143,9 +106,6 @@ void InfoWindow::loadImportedFiles() {
     }
 }
 
-
-
-
 void InfoWindow::onTabChanged(int index)
 {
     qDebug() << "Tab changed to Theme: " << index;
@@ -170,7 +130,17 @@ void InfoWindow::changeFont() {
             ui->tabWidget->setStyleSheet(style);
             ui->tabWidget->setFont(font);
 
-            saveSettings();
+            QVariantMap innerFontSettings =
+            {
+                {"fontColor", m_fontColor.name()},
+                {"fontFamily", ui->tabWidget->font().family()},
+                {"fontSize", ui->tabWidget->font().pointSize()},
+                {"fontBold", ui->tabWidget->font().bold()},
+                {"fontItalic", ui->tabWidget->font().italic()}
+            };
+            QVariantMap fontSettings;
+            fontSettings["fontSettings"] = innerFontSettings;
+            emit multipleSettingsChanged(fontSettings);
         }
     }
 }
@@ -186,7 +156,7 @@ void InfoWindow::changeBackgroundColor() {
         this->setAutoFillBackground(true);
         this->setPalette(palette);
 
-        saveSettings();
+        emit settingChanged("backgroundColor", m_currentColor.name());
     }
 }
 
@@ -195,7 +165,6 @@ void InfoWindow::closeEvent(QCloseEvent* event) {
     event->ignore();
     this->hide();
 }
-
 
 // Mouse press events (For dragging)
 void InfoWindow::mousePressEvent(QMouseEvent* event) {
@@ -219,6 +188,7 @@ void InfoWindow::mouseMoveEvent(QMouseEvent* event) {
         event->ignore();
     }
 }
+
 void InfoWindow::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         m_dragging = false;  // Stop dragging when mouse is released
@@ -226,66 +196,105 @@ void InfoWindow::mouseReleaseEvent(QMouseEvent* event) {
     }
 }
 
+// final save to ensure saving properly when closed
 void InfoWindow::saveSettings() {
-    QJsonObject settingsObj;
-    settingsObj["backgroundColor"] = m_currentColor.name();
-    settingsObj["fontColor"] = m_fontColor.name();
-    settingsObj["fontFamily"] = ui->tabWidget->font().family();
-    settingsObj["fontSize"] = ui->tabWidget->font().pointSize();
-    settingsObj["fontBold"] = ui->tabWidget->font().bold();
-    settingsObj["fontItalic"] = ui->tabWidget->font().italic();
+    QVariantMap innerFontSettings =
+    {
+        {"backgroundColor", m_currentColor.name()},
 
-    QJsonDocument doc(settingsObj);
-
-    QString path = QDir::currentPath(); 
-    QFile file(path + "/settings.json");
-
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(doc.toJson());
-        file.close();
-        
-    }
+        {"fontFamily", ui->tabWidget->font().family()},
+        {"fontSize", ui->tabWidget->font().pointSize()},
+        {"fontColor",m_fontColor.name()},
+        {"fontItalic", ui->tabWidget->font().italic()},
+        {"fontBold", ui->tabWidget->font().bold()}
+    };
+    QVariantMap fontSettings;
+    fontSettings["fontSettings"] = innerFontSettings;
+    emit multipleSettingsChanged(fontSettings);
 }
 
+void InfoWindow::applySettings(const QJsonObject& settings) {
+    qDebug() << "applying Settings";
+    // Background color
+    if (settings.contains("backgroundColor"))
+        m_currentColor = QColor(settings["backgroundColor"].toString());
 
+    // Font
+    QFont font;
+    if (settings.contains("fontSettings")) {
+        QJsonObject fontSettings = settings["fontSettings"].toObject();
 
-void InfoWindow::loadSettings() {
-    QString path = QDir::currentPath();  
-    QFile file(path + "/settings.json");
-
-    if (file.open(QIODevice::ReadOnly)) {
-        QByteArray data = file.readAll();
-        file.close();
-
-        QJsonDocument doc = QJsonDocument::fromJson(data);
-        QJsonObject obj = doc.object();
-
-        if (obj.contains("backgroundColor"))
-            m_currentColor = QColor(obj["backgroundColor"].toString());
-        if (obj.contains("fontColor"))
-            m_fontColor = QColor(obj["fontColor"].toString());
-
-        QFont font;
-        font.setFamily(obj["fontFamily"].toString());
-        font.setPointSize(obj["fontSize"].toInt());
-        font.setBold(obj["fontBold"].toBool());
-        font.setItalic(obj["fontItalic"].toBool());
-
-        QPalette palette;
-        palette.setColor(QPalette::Window, m_currentColor);
-        this->setAutoFillBackground(true);
-        this->setPalette(palette);
-
-        QString style = QString("color: %1; font-family: %2; font-size: %3pt; font-weight: %4; font-style: %5;")
-            .arg(m_fontColor.name())
-            .arg(font.family())
-            .arg(font.pointSize())
-            .arg(font.bold() ? "bold" : "normal")
-            .arg(font.italic() ? "italic" : "normal");
-        ui->tabWidget->setStyleSheet(style);
-        ui->tabWidget->setFont(font);
+        if (fontSettings.contains("fontFamily")) {
+            font.setFamily(fontSettings["fontFamily"].toString());
+        }
+        if (fontSettings.contains("fontSize")) {
+            font.setPointSize(fontSettings["fontSize"].toInt());
+        }
+        if (fontSettings.contains("fontColor")) {
+            m_fontColor = QColor(fontSettings["fontColor"].toString());
+        }
+        if (fontSettings.contains("fontItalic")) {
+            font.setItalic(fontSettings["fontItalic"].toBool());
+        }
+        if (fontSettings.contains("fontBold")) {
+            font.setBold(fontSettings["fontBold"].toBool());
+        }
     }
+
+    // Apply background
+    QPalette palette;
+    palette.setColor(QPalette::Window, m_currentColor);
+    this->setAutoFillBackground(true);
+    this->setPalette(palette);
+
+    // Apply font
+    QString style = QString("color: %1; font-family: %2; font-size: %3pt; font-weight: %4; font-style: %5;")
+        .arg(m_fontColor.name())
+        .arg(font.family())
+        .arg(font.pointSize())
+        .arg(font.bold() ? "bold" : "normal")
+        .arg(font.italic() ? "italic" : "normal");
+
+    ui->tabWidget->setStyleSheet(style);
+    ui->tabWidget->setFont(font);
 }
+
+//void InfoWindow::loadSettings() {
+//    QFile file(path + "/settings.json");
+//
+//    if (file.open(QIODevice::ReadOnly)) {
+//        QByteArray data = file.readAll();
+//        file.close();
+//
+//        QJsonDocument doc = QJsonDocument::fromJson(data);
+//        QJsonObject obj = doc.object();
+//
+//        if (obj.contains("backgroundColor"))
+//            m_currentColor = QColor(obj["backgroundColor"].toString());
+//        if (obj.contains("fontColor"))
+//            m_fontColor = QColor(obj["fontColor"].toString());
+//
+//        QFont font;
+//        font.setFamily(obj["fontFamily"].toString());
+//        font.setPointSize(obj["fontSize"].toInt());
+//        font.setBold(obj["fontBold"].toBool());
+//        font.setItalic(obj["fontItalic"].toBool());
+//
+//        QPalette palette;
+//        palette.setColor(QPalette::Window, m_currentColor);
+//        this->setAutoFillBackground(true);
+//        this->setPalette(palette);
+//
+//        QString style = QString("color: %1; font-family: %2; font-size: %3pt; font-weight: %4; font-style: %5;")
+//            .arg(m_fontColor.name())
+//            .arg(font.family())
+//            .arg(font.pointSize())
+//            .arg(font.bold() ? "bold" : "normal")
+//            .arg(font.italic() ? "italic" : "normal");
+//        ui->tabWidget->setStyleSheet(style);
+//        ui->tabWidget->setFont(font);
+//    }
+//}
 
 
 
