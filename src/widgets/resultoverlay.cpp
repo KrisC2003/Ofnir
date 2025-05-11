@@ -5,11 +5,17 @@ ResultOverlay::ResultOverlay(const QVector<QPair<QString, QRect>>& blockVector, 
 
     , m_blockVector(blockVector)
     , m_offsetRect(offsetRect)
+    , m_labelsVisible(true)
 {
     setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+    setFocusPolicy(Qt::StrongFocus);
     showFullScreen();
+    raise();
     activateWindow();
+    setFocus();
+
 
     showQLabels();
 
@@ -17,7 +23,7 @@ ResultOverlay::ResultOverlay(const QVector<QPair<QString, QRect>>& blockVector, 
 }
 
 void ResultOverlay::showQLabels() {
-    int lineSpacing = 3;
+    int lineSpacing = 2;
     for (const QPair<QString, QRect>& block : m_blockVector) {
         const QString& fullText = block.first;
         QRect baseRect = block.second.translated(m_offsetRect.topLeft());
@@ -25,11 +31,11 @@ void ResultOverlay::showQLabels() {
         // Split by newline or sentence
         QStringList lines = fullText.split(QRegularExpression("[\\n\\r]+"), Qt::SkipEmptyParts);
 
-        int verticalOffset = 2;
+        int verticalOffset = 0;
 
-        int minFontSize = 8;  // Minimum readable font size
-        int maxFontSize = 12; // Maximum font size
-        int scaledFontSize = qMin(m_offsetRect.width(), m_offsetRect.height()) / 4;  // Adjust scaling factor
+        int minFontSize = 8;
+        int maxFontSize = 12;
+        int scaledFontSize = qMin(m_offsetRect.width(), m_offsetRect.height()) / 4;
 
         for (const QString& line : lines) {
             QLabel* label = new QLabel(this);
@@ -55,8 +61,33 @@ void ResultOverlay::showQLabels() {
 
             label->move(labelPos);
             label->show();
+            m_labels.push_back(label);
             verticalOffset += label->height() + lineSpacing;
         }
+    }
+    QPushButton* hideButton = new QPushButton("Hide Labels", this);
+    int buttonWidth = 100;
+    int buttonHeight = 30;
+
+    // Position it at bottom-left of m_offsetRect
+    int x = m_offsetRect.left();
+    int y = m_offsetRect.bottom();
+
+    hideButton->setGeometry(x, y, buttonWidth, buttonHeight);
+
+    connect(hideButton, &QPushButton::clicked, this, &ResultOverlay::toggleLabelVisibility);
+    hideButton->show();
+}
+void ResultOverlay::toggleLabelVisibility() {
+    m_labelsVisible = !m_labelsVisible;
+    for (QLabel* label : m_labels) {
+        label->setVisible(m_labelsVisible);
+    }
+}
+void ResultOverlay::keyPressEvent(QKeyEvent* event) {
+    //qDebug() << event->key();
+    if (event->key() == Qt::Key_Escape) {
+        close();  // Triggers deletion
     }
 }
 

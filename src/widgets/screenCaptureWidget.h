@@ -8,10 +8,7 @@
 #include <QPainter>
 #include <QDateTime>
 #include <QDir>
-
-class QMouseEvent;
-class QPaintEvent;
-class QPixmap;
+#include <QMouseEvent>
 
 class screenCaptureWidget : public QWidget 
 {
