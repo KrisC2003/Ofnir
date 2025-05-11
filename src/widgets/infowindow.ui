@@ -66,70 +66,126 @@
         <enum>QTabWidget::TabShape::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
-       <widget class="QDialog" name="Hotkeys">
+       <widget class="QDialog" name="SettingsTab">
         <attribute name="title">
          <string>Hotkeys</string>
         </attribute>
-        <widget class="QLabel" name="currhotkey">
+        <widget class="QWidget" name="verticalLayoutWidget">
          <property name="geometry">
           <rect>
-           <x>170</x>
-           <y>60</y>
-           <width>231</width>
-           <height>28</height>
+           <x>10</x>
+           <y>10</y>
+           <width>160</width>
+           <height>80</height>
           </rect>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>16</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Hotkey</string>
-         </property>
+         <layout class="QVBoxLayout" name="OptionLabels">
+          <item>
+           <widget class="QLabel" name="hotkeyLabel">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Screenshot:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="languageLabel">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Language:</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
-        <widget class="QPushButton" name="changehotkey">
+        <widget class="QWidget" name="verticalLayoutWidget_2">
          <property name="geometry">
           <rect>
-           <x>470</x>
-           <y>60</y>
-           <width>80</width>
-           <height>29</height>
+           <x>190</x>
+           <y>10</y>
+           <width>160</width>
+           <height>80</height>
           </rect>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>12</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Change</string>
-         </property>
+         <layout class="QVBoxLayout" name="SettingDisplays">
+          <item>
+           <widget class="QLabel" name="currHotkey">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Hotkey</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="currLang">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Language</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
-        <widget class="QLabel" name="Screenshot">
+        <widget class="QWidget" name="verticalLayoutWidget_3">
          <property name="geometry">
           <rect>
-           <x>20</x>
-           <y>60</y>
-           <width>121</width>
-           <height>28</height>
+           <x>500</x>
+           <y>10</y>
+           <width>91</width>
+           <height>80</height>
           </rect>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>16</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Screenshot:</string>
-         </property>
+         <layout class="QVBoxLayout" name="SettingButtons">
+          <item>
+           <widget class="QPushButton" name="changeHotkey">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Change</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="changeLang">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Change</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </widget>
-       <widget class="QDialog" name="Theme">
+       <widget class="QDialog" name="ThemeTab">
         <property name="font">
          <font>
           <pointsize>16</pointsize>
@@ -162,7 +218,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="backgroundColorLabel">
             <property name="font">
              <font>
               <pointsize>16</pointsize>
@@ -216,7 +272,7 @@
          </layout>
         </widget>
        </widget>
-       <widget class="QDialog" name="Dictionary">
+       <widget class="QDialog" name="DictionaryTab">
         <property name="font">
          <font>
           <pointsize>16</pointsize>
@@ -237,6 +293,22 @@
            <height>24</height>
           </rect>
          </property>
+         <property name="mouseTracking">
+          <bool>true</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+	background-color: #dedede;
+	border: none;
+}
+QPushButton:hover {
+	background-color: #898989;
+}
+QPushButton:pressed {
+	background-color: #898989;
+}
+</string>
+         </property>
          <property name="text">
           <string>Import</string>
          </property>
@@ -249,6 +321,19 @@
            <width>80</width>
            <height>24</height>
           </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+	background-color: #dedede;
+	border: none;
+}
+QPushButton:hover {
+	background-color: #898989;
+}
+QPushButton:pressed {
+	background-color: #898989;
+}
+</string>
          </property>
          <property name="text">
           <string>Export</string>
