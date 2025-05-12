@@ -4,18 +4,13 @@
 #include <QDir>
 #include <QThread>
 #include <QStandardPaths>
-#include "src/settings/globalHotkeyFilter.h"
-#include "src/settings/settingsmanager.h"
-#include "src/widgets/infowindow.h"
-#include "src/widgets/trayicon.h"
-#include "src/widgets/screencapturewidget.h"
-#include "src/widgets/resultoverlay.h"
-#include "ocrmanager.h"
 
-class globalHotkeyFilter;
-class screenCaptureWidget;
+class GlobalHotkeyFilter;
+class SettingsManager;
 class TrayIcon;
-
+class ScreenCaptureWidget;
+class OCRManager;
+class ResultOverlay;
 // should handle initialization and background processes (like data)
 
 class OfnirDaemon : public QObject 
@@ -24,7 +19,10 @@ class OfnirDaemon : public QObject
 public:
 	explicit OfnirDaemon(QObject* parent = nullptr);
 	virtual ~OfnirDaemon() = default;
-	QString m_folderPath;
+
+	SettingsManager* settingsManager() const { return m_settingsManager; }
+	GlobalHotkeyFilter* hotkeyFilter() const { return m_hotkeyFilter;  }
+
 protected:
 	bool changeHotkeys();
 	bool saveToHistory();
@@ -37,8 +35,10 @@ private:
 	OCRManager* m_ocrManager;
 	SettingsManager* m_settingsManager;
 
+	QString m_folderPath;
+
 	QScreen* m_screen;
-	globalHotkeyFilter* hotkeyFilter = nullptr;
+	GlobalHotkeyFilter* m_hotkeyFilter = nullptr;
 	TrayIcon* m_trayIcon = nullptr;
 
 private slots:

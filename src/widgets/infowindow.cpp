@@ -1,26 +1,28 @@
+#include "src/core/ofnirdaemon.h"
+#include "src/settings/settingsmanager.h"
+#include "src/settings/globalhotkeyfilter.h"
+#include "filelistwidget.h"
 #include "infowindow.h"
 #include "ui_infowindow.h"
 
-InfoWindow::InfoWindow(SettingsManager* settings, QDialog* parent)
+InfoWindow::InfoWindow(OfnirDaemon* daemon, QDialog* parent)
     : QDialog(parent)
     , ui(new Ui::InfoWindow)
-    , settingsManager(settings)
+    , ofnirDaemon(daemon)
 {
 
     ui->setupUi(this);
-    hotkeyFilter = new globalHotkeyFilter(this);
 
-    connect(this, &InfoWindow::settingChanged, settingsManager, &SettingsManager::onSettingChanged);
-    connect(this, &InfoWindow::multipleSettingsChanged, settingsManager, &SettingsManager::onSettingsChanged);
-    connect(settingsManager, &SettingsManager::settingsLoaded, this, &InfoWindow::applySettings);
-    settingsManager->load();
+    connect(this, &InfoWindow::settingChanged, ofnirDaemon->settingsManager(), &SettingsManager::onSettingChanged);
+    connect(this, &InfoWindow::multipleSettingsChanged, ofnirDaemon->settingsManager(), &SettingsManager::onSettingsChanged);
+    connect(ofnirDaemon->settingsManager(), &SettingsManager::settingsLoaded, this, &InfoWindow::applySettings);
+    ofnirDaemon->settingsManager()->load();
 
     setWindowIcon(QIcon(":/icon.png"));
     setWindowFlags(Qt::FramelessWindowHint);
     //connects ui buttons to functions
 
-
-    connect(hotkeyFilter, &globalHotkeyFilter::hotkeyUpdated, this, [this](const QString& hotkeyText) {
+    connect(ofnirDaemon->hotkeyFilter(), &GlobalHotkeyFilter::hotkeyUpdated, this, [this](const QString& hotkeyText) {
             QLabel* label = ui->tabWidget->findChild<QLabel*>("currHotkey");
             label->setText(hotkeyText);
         });
@@ -33,7 +35,7 @@ InfoWindow::InfoWindow(SettingsManager* settings, QDialog* parent)
 
     //connect(ui->importButton, &QPushButton::clicked, this, &InfoWindow::importFile);
 
-    hotkeyFilter->registerShortcut();
+    ofnirDaemon->hotkeyFilter()->registerShortcut();
     //loadSettings();
     loadImportedFiles();
 }

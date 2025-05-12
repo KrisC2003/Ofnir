@@ -1,19 +1,17 @@
 #include "globalHotkeyFilter.h"
-#include <QMap>
-#include <QDebug>
-#include <QKeySequence>
 
-globalHotkeyFilter::globalHotkeyFilter(QObject* parent) : QObject(parent) {
+
+GlobalHotkeyFilter::GlobalHotkeyFilter(QObject* parent) : QObject(parent) {
 
 }
 
 // Update QLabel to display current hotkey
-void globalHotkeyFilter::updateHotkeyDisplay() {
+void GlobalHotkeyFilter::updateHotkeyDisplay() {
     QString hotkeyText = getHotkeyDisplayText(m_savedHotkey.keycode, m_savedHotkey.modifier);
     emit hotkeyUpdated(hotkeyText); // Signal to update the label
 }
 
-QString globalHotkeyFilter::getHotkeyDisplayText(quint32 keycode, quint32 modifiers) {
+QString GlobalHotkeyFilter::getHotkeyDisplayText(quint32 keycode, quint32 modifiers) {
     QStringList modifierNames;
 
     if (modifiers & MOD_SHIFT) {
@@ -36,7 +34,7 @@ QString globalHotkeyFilter::getHotkeyDisplayText(quint32 keycode, quint32 modifi
     return modifierNames.join("+") + "+" + keyText;
 }
 
-bool globalHotkeyFilter::nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result)
+bool GlobalHotkeyFilter::nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result)
 {
     Q_UNUSED(eventType)
         Q_UNUSED(result)
@@ -55,7 +53,7 @@ bool globalHotkeyFilter::nativeEventFilter(const QByteArray& eventType, void* me
 }
 
 // converts qt key to virtual key for hotkey for when we need to save stuff
-quint32 globalHotkeyFilter::nativeKeycode(Qt::Key keycode) {
+quint32 GlobalHotkeyFilter::nativeKeycode(Qt::Key keycode) {
     HKL hkl = GetKeyboardLayout(0); // gets current keyboard layout
     if (keycode <= 0xFFFF) {
         const SHORT vKey = VkKeyScanExW(static_cast<WCHAR>(keycode), hkl);
@@ -66,7 +64,7 @@ quint32 globalHotkeyFilter::nativeKeycode(Qt::Key keycode) {
     return getSpecialVirtualKeyCode(keycode);
 }
 
-quint32 globalHotkeyFilter::nativeModifier(Qt::KeyboardModifiers modifier) {
+quint32 GlobalHotkeyFilter::nativeModifier(Qt::KeyboardModifiers modifier) {
     quint32 bitmask = 0;
     if (modifier & Qt::ShiftModifier)
         bitmask |= MOD_SHIFT;
@@ -79,7 +77,7 @@ quint32 globalHotkeyFilter::nativeModifier(Qt::KeyboardModifiers modifier) {
     return bitmask;
 }
 // for special keys that arent just the basic keys
-quint32 globalHotkeyFilter::getSpecialVirtualKeyCode(Qt::Key keycode) {
+quint32 GlobalHotkeyFilter::getSpecialVirtualKeyCode(Qt::Key keycode) {
     static QMap<Qt::Key, quint32> keyMap = {
         {Qt::Key_Escape, VK_ESCAPE},
         {Qt::Key_Tab, VK_TAB},
@@ -165,7 +163,7 @@ quint32 globalHotkeyFilter::getSpecialVirtualKeyCode(Qt::Key keycode) {
     return vkCode;
 }
 
-bool globalHotkeyFilter::registerShortcut() {
+bool GlobalHotkeyFilter::registerShortcut() {
     m_savedHotkey = { nativeKeycode(Qt::Key_X), nativeModifier(Qt::AltModifier) }; // test temp
     RegisterHotKey(NULL, 1, m_savedHotkey.modifier | MOD_NOREPEAT, m_savedHotkey.keycode);
 
@@ -173,7 +171,7 @@ bool globalHotkeyFilter::registerShortcut() {
     return true;
 }
 // we only really need 1 hotkey atm so yea
-bool globalHotkeyFilter::unregisterShortcut() {
+bool GlobalHotkeyFilter::unregisterShortcut() {
     UnregisterHotKey(NULL, 1);
     return true;
 }

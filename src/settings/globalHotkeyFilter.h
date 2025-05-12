@@ -1,9 +1,12 @@
 #pragma once
 
 #include <QAbstractNativeEventFilter>
-#include <QObject>
 #include <qt_windows.h>
-#include <QString> // For QString
+#include <QMap>
+#include <QDebug>
+#include <QKeySequence>
+#include <QObject>
+#include <QString>
 
 struct Hotkey {
     quint32 keycode;
@@ -14,12 +17,12 @@ struct Hotkey {
     }
 };
 
-class globalHotkeyFilter : public QObject, public QAbstractNativeEventFilter
+class GlobalHotkeyFilter : public QObject, public QAbstractNativeEventFilter
 {
     Q_OBJECT
 
 public:
-    explicit globalHotkeyFilter(QObject* parent = nullptr);
+    explicit GlobalHotkeyFilter(QObject* parent = nullptr);
     bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override;
     bool registerShortcut();
     bool unregisterShortcut();

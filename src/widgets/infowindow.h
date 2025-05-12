@@ -13,15 +13,14 @@
 #include <QColorDialog>
 #include <QPalette>
 #include <QFontDialog>
-#include <QJsonDocument>
 #include <QJsonObject>
 #include <QFile>
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QJsonArray>
-#include "src/settings/settingsmanager.h"
-#include "src/settings/globalHotkeyFilter.h"
-#include "filelistwidget.h"
+
+class OfnirDaemon;
+class FileListWidget;
 
 namespace Ui {
     class InfoWindow;
@@ -32,7 +31,7 @@ class InfoWindow : public QDialog
     Q_OBJECT
 
     public:
-        explicit InfoWindow(SettingsManager* settings, QDialog* parent = nullptr);
+        explicit InfoWindow(OfnirDaemon* daemon, QDialog* parent = nullptr);
         ~InfoWindow();
 
     protected:
@@ -48,13 +47,13 @@ class InfoWindow : public QDialog
         void importFile();
 
     private:
-        globalHotkeyFilter* hotkeyFilter;
         void saveSettings();       
         //void loadSettings();
         void loadImportedFiles();
         void saveImportedFiles();
 
-        SettingsManager* settingsManager;
+        OfnirDaemon* ofnirDaemon = nullptr;
+
         QColor m_currentColor;  
         QFont m_currentFont;
         QColor m_fontColor;

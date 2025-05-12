@@ -36,7 +36,8 @@ void SettingsManager::load() {
         return;
     }
     m_settings = doc.object();
-    emit settingsLoaded(m_settings);
+    // currently not used like intended because info window creation happens after creation of settings manager so its never heard so for now its called by infowindow
+    emit settingsLoaded(m_settings); 
 }
 
 void SettingsManager::save() {
