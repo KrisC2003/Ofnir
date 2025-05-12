@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QTextDocumentFragment>
 #include <QRect>
 #include <QTimer>
 #include <QRegularExpression>
@@ -25,12 +26,15 @@ public:
 	std::wstring convertMultilangUTF8ToWstring(const QString& str);
 
 protected:
-	QString htmlEntityDecode(const QString& input);
 	QString encodeImageToBase64(const QString& imagePath);
 	bool fetchOCRResponse(const QString& imagePath, QByteArray& responseData);
 private:
-	QRect parseBoundingBox(const QJsonObject& boundingBoxObj);
 	cv::Mat loadImage(const QString& imagePath);
+
+	QRect parseBoundingBox(const QJsonObject& boundingBoxObj);
+	QJsonObject createOCRRequestBody(const QString& base64Image);
+	bool sendNetworkRequest(const QNetworkRequest& request, const QByteArray& data, QByteArray& responseData);
+
 	bool isCJLanguage(const QString& language);
 	bool checkNetworkStatus();
 

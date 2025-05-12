@@ -11,18 +11,16 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
     imgProcessor.initPreprocessImg(img);
 
     // Test file
-    cv::Mat resultFiltered = img.clone();
-    cv::imwrite("processed_img.png", resultFiltered);
+    //cv::Mat resultFiltered = img.clone();
+    //cv::imwrite("processed_img.png", resultFiltered);
 
     int maxRetries = 2;
     int retryCount = 0;
 
     QByteArray responseData;
-    bool responseSuccess = fetchOCRResponse(imagePath, responseData);
-
-    if (!responseSuccess) {
+    if (!fetchOCRResponse(imagePath, responseData)) {
         qWarning() << "OCR request failed";
-        return QVector<QPair<QString, QRect>>();
+        return {};
     }
 
     // Parse and process the response data
@@ -31,15 +29,14 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
 
     if (parseError.error != QJsonParseError::NoError || jsonResponse.isNull()) {
         qWarning() << "Failed to parse translation response:" << parseError.errorString();
-        return QVector<QPair<QString, QRect>>();
+        return {};
     }
 
     QJsonObject jsonResponseObj = jsonResponse.object();
     QJsonArray responses = jsonResponseObj["responses"].toArray();
-
     if (responses.isEmpty() || !responses[0].toObject().contains("fullTextAnnotation")) {
         qWarning() << "No text detected.";
-        return QVector<QPair<QString, QRect>>();
+        return {};
     }
 
     QJsonObject annotation = responses[0].toObject()["fullTextAnnotation"].toObject();
@@ -68,9 +65,10 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
             QJsonObject boundingBoxObj = block["boundingBox"].toObject();
             QRect boundingBoxData = parseBoundingBox(boundingBoxObj);
 
-            QString paragraphText;
             QJsonArray paragraphs = block["paragraphs"].toArray();
             for (const QJsonValue& paragraphVal : paragraphs) {
+                QMap<QString, double> languageConfidenceMap;
+                QString paragraphText;
                 QJsonObject paragraph = paragraphVal.toObject();
                 QJsonArray words = paragraph["words"].toArray();
 
@@ -78,34 +76,53 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
                     QJsonObject word = wordVal.toObject();
                     QJsonArray symbols = word["symbols"].toArray();
 
+
                     for (const QJsonValue& symbolVal : symbols) {
                         QJsonObject symbol = symbolVal.toObject();
                         paragraphText += symbol["text"].toString();
                     }
-                    paragraphText = paragraphText.trimmed();
-                    // Skip if blockText is only numeric
-                    if (!paragraphText.contains(QRegularExpression("\\p{L}"))) {
-                        continue; // No letters = skip block
+                    // check whats the most dominant language and translate if needed essentially
+                    if (word.contains("property")) {
+                        QJsonObject property = word["property"].toObject();
+                        if (property.contains("detectedLanguages")) {
+                            QJsonArray languageDetected = property["detectedLanguages"].toArray();
+                            for (const QJsonValue& langVal : languageDetected) {
+                                QJsonObject language = langVal.toObject();
+                                QString languageCode = language["languageCode"].toString();
+                                double confidence = language["confidence"].toDouble();
+                                languageConfidenceMap[languageCode] += confidence;
+                            }
+                        }
                     }
+                    paragraphText = paragraphText.trimmed();
 
                     QJsonObject property = symbols.last().toObject()["property"].toObject();
                     QString breakType = property["detectedBreak"].toObject()["type"].toString();
 
-                    if (breakType == "SPACE") {
-                        paragraphText += " ";
-                    }
-                    else if (breakType == "EOL_SURE_SPACE" || breakType == "LINE_BREAK") {
-                        paragraphText += "\n";
-                    }
-                    else if (breakType == "HYPHEN") {
-                        paragraphText += "-";
+                    if (breakType == "SPACE") paragraphText += " ";
+                    else if (breakType == "EOL_SURE_SPACE" || breakType == "LINE_BREAK") paragraphText += "\n";
+                    else if (breakType == "HYPHEN") paragraphText += "-";
+                }
+
+                if (!paragraphText.contains(QRegularExpression("\\p{L}"))) {
+                    continue;
+                }
+                QString dominantLanguage;
+                double maxConfidence = -1.0;
+                for (auto it = languageConfidenceMap.begin(); it != languageConfidenceMap.end(); ++it) {
+                    if (it.value() > maxConfidence) {
+                        dominantLanguage = it.key();
+                        maxConfidence = it.value();
                     }
                 }
-            }
 
-            allBlocks.push_back(QPair<QString, QRect>(paragraphText, boundingBoxData));
+                if (dominantLanguage != "en") {
+                    paragraphText = translateText(paragraphText, "en");
+                }
+                allBlocks.push_back(QPair<QString, QRect>(paragraphText, boundingBoxData));
+            }
         }
-    };
+    }
 
     // Retry logic based on OCR confidence
     while (retryCount < maxRetries) {
@@ -114,41 +131,20 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
             break;
         }
 
-        responseSuccess = fetchOCRResponse(imagePath, responseData);
-        if (!responseSuccess) {
+        if (!fetchOCRResponse(imagePath, responseData)) {
             qWarning() << "failed to fetch OCR response";
-            return QVector<QPair<QString, QRect>>();
+            return {};
         }
 
         retryCount++;
     }
-
     if (retryCount == maxRetries) {
         qWarning() << "Max retries reached";
     }
-    //for (const QPair<QString, QRect>& block : allBlocks) {
-    //    qDebug() << "Debug message: " << block.first;
-    //}
+
     return allBlocks;
 }
-QRect OCRManager::parseBoundingBox(const QJsonObject& boundingBoxObj) {
-    QJsonArray verticesJson = boundingBoxObj["vertices"].toArray();
-    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
 
-    for (const QJsonValue& v : verticesJson) {
-        QJsonObject point = v.toObject();
-        int x = point["x"].toInt(0);
-        int y = point["y"].toInt(0);
-        minX = std::min(minX, x);
-        minY = std::min(minY, y);
-        maxX = std::max(maxX, x);
-        maxY = std::max(maxY, y);
-    }
-
-    return QRect(minX, minY, maxX - minX, maxY - minY);
-}
-
-// translates text 
 QString OCRManager::translateText(const QString& text, const QString& targetLang) {
     if (text.isEmpty()) {
         qWarning() << "Input text is empty. (OCRManager::translateText)";
@@ -215,39 +211,32 @@ QString OCRManager::translateText(const QString& text, const QString& targetLang
     }
 
     reply->deleteLater();
+    translatedText = QTextDocumentFragment::fromHtml(translatedText).toPlainText(); //converts html entities
     return translatedText;
 }
 
 bool OCRManager::fetchOCRResponse(const QString& imagePath, QByteArray& responseData) {
     if (!checkNetworkStatus()) {
+        qWarning() << "No network connection.";
         return false;
     }
-    QNetworkRequest request;
+
     QString base64Image = encodeImageToBase64(imagePath);
     if (base64Image.isEmpty()) {
         qWarning() << "Failed to encode image.";
         return false;
     }
 
-    QJsonObject requestBody = {
-        { "requests", QJsonArray{
-            QJsonObject{
-                { "image", QJsonObject{ 
-                    { "content", base64Image }
-                }},
-                { "features", QJsonArray{
-                    QJsonObject{ { "type", "DOCUMENT_TEXT_DETECTION" } }
-                }}
-            }
-        }}
-    };
+    QJsonObject requestBody = createOCRRequestBody(base64Image);
 
-    QString url = QString("https://vision.googleapis.com/v1/images:annotate?key=%1").arg(apiKey);
-    request.setUrl(QUrl(url));
+    QNetworkRequest request(QUrl("https://vision.googleapis.com/v1/images:annotate?key=" + apiKey));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    QNetworkReply* reply = networkManager->post(request, QJsonDocument(requestBody).toJson());
+    return sendNetworkRequest(request, QJsonDocument(requestBody).toJson(), responseData);
+}
 
+bool OCRManager::sendNetworkRequest(const QNetworkRequest& request, const QByteArray& data, QByteArray& responseData) {
+    QNetworkReply* reply = networkManager->post(request, data);
     QEventLoop eventLoop;
     connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
@@ -257,13 +246,39 @@ bool OCRManager::fetchOCRResponse(const QString& imagePath, QByteArray& response
         reply->deleteLater();
         return true;
     }
-    else {
-        qDebug() << "OCR Request failed: " << reply->errorString();
-        reply->deleteLater();
-        return false;
-    }
+
+    qWarning() << "Network request failed: " << reply->errorString();
+    reply->deleteLater();
+    return false;
 }
 
+QRect OCRManager::parseBoundingBox(const QJsonObject& boundingBoxObj) {
+    QJsonArray verticesJson = boundingBoxObj["vertices"].toArray();
+    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+
+    for (const QJsonValue& v : verticesJson) {
+        QJsonObject point = v.toObject();
+        int x = point["x"].toInt(0);
+        int y = point["y"].toInt(0);
+        minX = std::min(minX, x);
+        minY = std::min(minY, y);
+        maxX = std::max(maxX, x);
+        maxY = std::max(maxY, y);
+    }
+
+    return QRect(minX, minY, maxX - minX, maxY - minY);
+}
+
+QJsonObject OCRManager::createOCRRequestBody(const QString& base64Image) {
+    return QJsonObject{
+        {"requests", QJsonArray{
+            QJsonObject{
+                {"image", QJsonObject{{"content", base64Image}}},
+                {"features", QJsonArray{QJsonObject{{"type", "DOCUMENT_TEXT_DETECTION"}}}}
+            }
+        }}
+    };
+}
 
 cv::Mat OCRManager::loadImage(const QString& imagePath) {
     std::string stringPath = imagePath.toStdString();
@@ -278,20 +293,6 @@ cv::Mat OCRManager::loadImage(const QString& imagePath) {
 std::wstring OCRManager::convertMultilangUTF8ToWstring(const QString& qstr) {
     std::wstring wstr = qstr.toStdWString();
     return wstr;
-}
-
-// converts htmlEntities to be more readable characters (for future use as google vision doesnt return htmlEntities)
-QString OCRManager::htmlEntityDecode(const QString& input) {
-    QHash<QString, QChar> html_entities = {
-        {"&quot;", '\"'}, {"&apos;", '\''}, {"&amp;", '&'},
-        {"&lt;", '<'}, {"&gt;", '>'}, {"&#39;", '\''}
-    };
-
-    QString output = input;
-    for (const auto& entity : html_entities) {
-        output.replace(entity, html_entities[entity]);
-    }
-    return output;
 }
 
 QString OCRManager::encodeImageToBase64(const QString& imagePath) {
