@@ -6,7 +6,10 @@
 #include <QPushButton>
 #include <QKeyEvent>
 
+
+
 class ResultOverlay : public QWidget {
+
 public:
 	ResultOverlay(const QVector<QPair<QString, QRect>>& blockVector, const QRect& offsetRect, QWidget* parent = nullptr);
 protected:

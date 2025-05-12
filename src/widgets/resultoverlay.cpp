@@ -21,47 +21,51 @@ ResultOverlay::ResultOverlay(const QVector<QPair<QString, QRect>>& blockVector, 
 	update();
 }
 
+
 void ResultOverlay::showQLabels() {
     int lineSpacing = 2;
     for (const QPair<QString, QRect>& block : m_blockVector) {
-        const QString& fullText = block.first;
+        QString fullText = block.first;
         QRect baseRect = block.second.translated(m_offsetRect.topLeft());
         qDebug() << fullText << " " << baseRect.topLeft();
-        // Split by newline or sentence
-        QStringList lines = fullText.split(QRegularExpression("[\\n\\r]+"), Qt::SkipEmptyParts);
-
-        int verticalOffset = 0;
 
         int minFontSize = 8;
         int maxFontSize = 12;
         int scaledFontSize = qMin(m_offsetRect.width(), m_offsetRect.height()) / 4;
+        scaledFontSize = qBound(minFontSize, scaledFontSize, maxFontSize);
 
-        for (const QString& line : lines) {
+        // Step 1: Group texts by QPoint
+        QHash<QPoint, QStringList> textMap;
+
+        for (const QPair<QString, QRect>& block : m_blockVector) {
+            QPoint pos = block.second.translated(m_offsetRect.topLeft()).topLeft();
+            QString cleanText = block.first.trimmed();
+            if (!cleanText.isEmpty()) {
+                textMap[pos].append(cleanText);
+            }
+        }
+        for (auto it = textMap.constBegin(); it != textMap.constEnd(); ++it) {
+            const QPoint& pos = it.key();
+            const QStringList& lines = it.value();
+            QString mergedText = lines.join("\n");
+
             QLabel* label = new QLabel(this);
-            label->setText(line.trimmed());
+            label->setText(mergedText);
             label->setStyleSheet("background-color: rgba(180,180,180,255); color: black; padding: 2px;");
-
-            // Ensure font size is within reasonable bounds
-            scaledFontSize = qBound(minFontSize, scaledFontSize, maxFontSize);
-
             label->setFont(QFont("Arial", scaledFontSize));
-            label->setTextFormat(Qt::PlainText);  // respects \n literally
-            label->setWordWrap(false);            // no wrapping
+            label->setTextFormat(Qt::PlainText); // Keep \n as literal
+            label->setWordWrap(false);
             label->adjustSize();
 
-            QPoint labelPos = baseRect.topLeft() + QPoint(0, verticalOffset);
-            if (label->width() > m_offsetRect.width()) {
+            if (label->width() > m_offsetRect.width())
                 label->setFixedWidth(m_offsetRect.width());
-            }
 
-            if (label->height() > m_offsetRect.height()) {
+            if (label->height() > m_offsetRect.height())
                 label->setFixedHeight(m_offsetRect.height());
-            }
 
-            label->move(labelPos);
+            label->move(pos);
             label->show();
             m_labels.push_back(label);
-            verticalOffset += label->height() + lineSpacing;
         }
     }
     createUtilButtons();

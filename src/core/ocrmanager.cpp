@@ -67,7 +67,6 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
 
             QJsonArray paragraphs = block["paragraphs"].toArray();
             for (const QJsonValue& paragraphVal : paragraphs) {
-                QMap<QString, double> languageConfidenceMap;
                 QString paragraphText;
                 QJsonObject paragraph = paragraphVal.toObject();
                 QJsonArray words = paragraph["words"].toArray();
@@ -80,19 +79,6 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
                     for (const QJsonValue& symbolVal : symbols) {
                         QJsonObject symbol = symbolVal.toObject();
                         paragraphText += symbol["text"].toString();
-                    }
-                    // check whats the most dominant language and translate if needed essentially
-                    if (word.contains("property")) {
-                        QJsonObject property = word["property"].toObject();
-                        if (property.contains("detectedLanguages")) {
-                            QJsonArray languageDetected = property["detectedLanguages"].toArray();
-                            for (const QJsonValue& langVal : languageDetected) {
-                                QJsonObject language = langVal.toObject();
-                                QString languageCode = language["languageCode"].toString();
-                                double confidence = language["confidence"].toDouble();
-                                languageConfidenceMap[languageCode] += confidence;
-                            }
-                        }
                     }
                     paragraphText = paragraphText.trimmed();
 
@@ -107,18 +93,7 @@ QVector<QPair<QString, QRect>> OCRManager::processOCRWithConfidence(const QStrin
                 if (!paragraphText.contains(QRegularExpression("\\p{L}"))) {
                     continue;
                 }
-                QString dominantLanguage;
-                double maxConfidence = -1.0;
-                for (auto it = languageConfidenceMap.begin(); it != languageConfidenceMap.end(); ++it) {
-                    if (it.value() > maxConfidence) {
-                        dominantLanguage = it.key();
-                        maxConfidence = it.value();
-                    }
-                }
-
-                if (dominantLanguage != "en") {
-                    paragraphText = translateText(paragraphText, "en");
-                }
+                paragraphText = translateText(paragraphText, "en");
                 allBlocks.push_back(QPair<QString, QRect>(paragraphText, boundingBoxData));
             }
         }
